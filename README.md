@@ -11,6 +11,7 @@ To make it feel more like a real operator tool, I also added:
 - an operations inbox for high-signal issue buckets
 - guided follow-up questions after each answer
 - exportable investigation briefs for sharing findings
+- a right-rail project guide that explains architecture, setup, deployment, authorship, and design choices
 
 ## Links
 
@@ -26,7 +27,8 @@ This project is a full-stack web app with:
 - a materialized graph for exploration
 - a React frontend for graph search, inspection, and grounded chat
 - an operations inbox for incomplete flows, open A/R, cancellations, and missing deliveries
-- answer-linked follow-up suggestions and brief export
+- answer-linked follow-up suggestions, recommended actions, and brief export
+- a project-help chatbot for reviewer and evaluator questions
 - Gemini-backed SQL planning for broader in-domain questions
 
 The core design choice was to keep the graph layer and the query layer on top of the same business model. I did not want a separate graph representation drifting away from the SQL representation and producing inconsistent answers.
@@ -36,9 +38,10 @@ The core design choice was to keep the graph layer and the query layer on top of
 The app is designed around a simple workflow:
 1. Start from the operations inbox, ask a business question, or search for a known entity.
 2. Run a grounded query against the semantic O2C model.
-3. Return a short business answer, guided follow-ups, the supporting evidence, and the executed SQL.
+3. Return a short business answer, structured highlights, recommended actions, guided follow-ups, and the supporting evidence.
 4. Focus the graph on the same entities so the visual view explains the answer.
 5. Export a brief if the result needs to be shared.
+6. Use the right-rail guide for project-specific questions without leaving the app.
 
 That flow matters more for this task than maximizing feature count. I wanted the app to feel dependable and readable first.
 
@@ -138,6 +141,8 @@ If I were reading this repo cold, I would start here:
   This is the bridge between answer results and the graph UI.
 - `backend/app/services/inbox_service.py`
   This powers the operator-focused issue buckets shown in the operations inbox.
+- `backend/app/services/project_help_service.py`
+  This powers the right-rail project guide and keeps its answers grounded in project notes.
 - `frontend/src/App.tsx`
   This shows how the product experience is stitched together.
 
@@ -218,7 +223,9 @@ Verified locally:
 - deterministic query flows
 - Gemini fallback query path
 - operations inbox metadata
+- project-guide help responses
 - guided follow-up suggestions
+- recommended action blocks
 - investigation brief export
 - frontend production build
 - backend smoke tests via `pytest`

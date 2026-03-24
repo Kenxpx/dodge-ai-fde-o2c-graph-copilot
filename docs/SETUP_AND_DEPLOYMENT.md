@@ -42,7 +42,9 @@ That means a reviewer can clone the repo and run it without fetching anything el
 The product also includes:
 - an operations inbox for high-signal issue buckets
 - guided follow-up questions in the chat experience
+- recommended action blocks in grounded ERP answers
 - Markdown brief export for investigation handoff
+- a project-help chatbot in the right rail for architecture and submission questions
 
 ## Local setup
 
@@ -189,6 +191,7 @@ After a deploy, I usually check:
 - one deterministic query
 - one Gemini-backed query
 - one follow-up question from a previous answer
+- one project-guide question through `/api/help/chat`
 
 ## Troubleshooting
 

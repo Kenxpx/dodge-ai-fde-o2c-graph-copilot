@@ -152,6 +152,17 @@ export function ChatPanel({
               </ul>
             ) : null}
 
+            {message.recommended_actions?.length ? (
+              <div className="action-section">
+                <p className="section-label">Recommended next actions</p>
+                <ul className="action-list">
+                  {message.recommended_actions.map((action) => (
+                    <li key={action}>{action}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
             {message.follow_up_questions?.length ? (
               <div className="follow-up-section">
                 <p className="section-label">Suggested next questions</p>

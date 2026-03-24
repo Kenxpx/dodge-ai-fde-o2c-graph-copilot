@@ -336,6 +336,20 @@
   color: #0f172a;
 }
 
+.action-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: #115e59;
+}
+
 .message-meta {
   border-left: 3px solid rgba(180, 83, 9, 0.35);
   padding-left: 10px;
@@ -534,6 +548,111 @@
 
 .panel-inspector {
   padding-bottom: 20px;
+}
+
+.inspector-header-row {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tab-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(248, 250, 252, 0.78);
+  color: #334155;
+  border-radius: 999px;
+  padding: 9px 13px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.95), rgba(2, 132, 199, 0.95));
+  color: white;
+  border-color: transparent;
+}
+
+.guide-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 20px;
+  min-height: 0;
+  flex: 1;
+}
+
+.guide-intro-card {
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(255, 255, 255, 0.96));
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.guide-example-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.guide-message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+  min-height: 0;
+}
+
+.guide-message {
+  border-radius: 22px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.guide-message.user {
+  background: linear-gradient(180deg, rgba(255, 251, 235, 0.96), rgba(255, 247, 237, 0.96));
+}
+
+.guide-message.assistant {
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.98));
+}
+
+.guide-message header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.guide-composer {
+  margin-top: auto;
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+  padding: 14px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guide-composer textarea {
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  padding: 14px 16px;
+  font: inherit;
+  resize: vertical;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .search-box {

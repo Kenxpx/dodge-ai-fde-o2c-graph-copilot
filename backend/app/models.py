@@ -82,6 +82,7 @@ class ChatResponse(BaseModel):
     answer: str
     answer_title: str | None = None
     highlights: list[str] = Field(default_factory=list)
+    recommended_actions: list[str] = Field(default_factory=list)
     follow_up_questions: list[str] = Field(default_factory=list)
     strategy: str
     warnings: list[str] = Field(default_factory=list)
@@ -97,3 +98,16 @@ class MetaResponse(BaseModel):
     dataset_stats: dict[str, Any]
     example_queries: list[str]
     ops_inbox: list[InboxItem] = Field(default_factory=list)
+
+
+class HelpChatRequest(BaseModel):
+    question: str
+    conversation: list[ChatTurn] = Field(default_factory=list)
+
+
+class HelpChatResponse(BaseModel):
+    answer: str
+    answer_title: str | None = None
+    highlights: list[str] = Field(default_factory=list)
+    suggested_questions: list[str] = Field(default_factory=list)
+    citations: list[str] = Field(default_factory=list)

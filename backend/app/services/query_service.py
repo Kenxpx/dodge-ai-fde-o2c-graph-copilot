@@ -514,6 +514,70 @@ Return a JSON object with:
         follow_ups.append("Identify sales orders that have broken or incomplete flows.")
         return follow_ups[:3]
 
+    def _recommended_actions(self, strategy: str, evidence: EvidenceTable) -> list[str]:
+        records = self._records(evidence)
+        if not records:
+            return []
+
+        if strategy == "template_trace_billing_document":
+            billing_document = records[0].get("billing_document")
+            return [
+                f"Validate whether billing document {billing_document} is still operationally active or was reversed later.",
+                "Confirm the linked accounting document and payment status before treating the invoice as fully closed.",
+                "Use the focused graph to verify the exact sales-order-to-delivery-to-billing chain.",
+            ]
+
+        if strategy == "template_top_customers":
+            customer_id = records[0].get("customer_id")
+            return [
+                f"Review recent billing traces for customer {customer_id} to understand the highest-volume flow pattern.",
+                "Check whether the top customers also drive cancellations or open A/R exposure.",
+                "Use the ranking as a shortlist for deeper customer-level investigations.",
+            ]
+
+        if strategy == "template_top_products":
+            product_id = records[0].get("product_id")
+            return [
+                f"Investigate which customers and delivery plants are most associated with product {product_id}.",
+                "Check whether high-volume products are also overrepresented in cancellation or open-item flows.",
+                "Use the result as a starting point for product-level exception analysis.",
+            ]
+
+        if strategy == "template_incomplete_flows":
+            sales_order = records[0].get("sales_order")
+            return [
+                f"Start with sales order {sales_order} and inspect where the flow breaks: delivery, billing, or clearing.",
+                "Prioritize orders that are delivered but not billed, since they usually indicate the most urgent leakage.",
+                "Use the graph focus and evidence rows to separate fulfillment issues from finance-clearance issues.",
+            ]
+
+        if strategy == "template_cancellations":
+            cancelled = records[0].get("cancelled_billing_document")
+            return [
+                f"Trace original billing document {cancelled} to understand what transaction was reversed.",
+                "Check whether cancellations cluster around specific customers, products, or delivery plants.",
+                "Treat repeated cancellations as a signal for process-quality review rather than a one-off anomaly.",
+            ]
+
+        if strategy == "template_open_ar":
+            accounting_document = records[0].get("accounting_document")
+            return [
+                f"Start with accounting document {accounting_document} and validate whether the missing clearing date is expected.",
+                "Review whether the open item is tied to a later cancellation or a genuinely unpaid invoice.",
+                "Use the result as a queue for finance follow-up rather than only a descriptive report.",
+            ]
+
+        columns = set(evidence.columns)
+        actions: list[str] = [
+            "Use the focused graph and evidence rows together before drawing a business conclusion.",
+            "Turn the top result into a trace query if you need a more exact lineage view.",
+        ]
+        if "customer_id" in columns:
+            actions.append("Drill into the leading customer entity to see whether the pattern is concentrated or widespread.")
+        elif "product_id" in columns:
+            actions.append("Follow the leading product into deliveries and billing flows to understand where the signal comes from.")
+        return actions[:3]
+
     def _focus_nodes_for_response(
         self,
         question: str,
@@ -587,6 +651,7 @@ Return a JSON object with:
                 answer="This system is designed to answer questions related to the provided SAP order-to-cash dataset only.",
                 answer_title="Out of scope",
                 highlights=[],
+                recommended_actions=[],
                 follow_up_questions=[],
                 strategy="guardrail_rejection",
                 warnings=[reason],
@@ -613,6 +678,10 @@ Return a JSON object with:
                     highlights=[
                         "Deterministic flows like billing traces, cancellations, top customers, and open A/R still work without an LLM.",
                         "Enable Gemini in environment settings to support broader in-domain questions.",
+                    ],
+                    recommended_actions=[
+                        "Use one of the deterministic ERP investigation paths until an LLM provider is configured.",
+                        "Anchor broader questions to a customer, billing document, sales order, or product id.",
                     ],
                     follow_up_questions=[
                         "Trace the full flow of billing document 90504298.",
@@ -653,6 +722,10 @@ Return a JSON object with:
                             "The request is in-domain, but the generated SQL could not be repaired safely enough to execute.",
                             "Try a more specific ERP question, or anchor the question to a billing document, customer, product, or sales order id.",
                         ],
+                        recommended_actions=[
+                            "Rephrase the question using a specific document, customer, or product identifier.",
+                            "Use a deterministic investigation path first, then branch into a narrower follow-up question.",
+                        ],
                         follow_up_questions=[
                             "Trace the full flow of billing document 90504298.",
                             "Identify sales orders that have broken or incomplete flows.",
@@ -669,6 +742,7 @@ Return a JSON object with:
                     )
 
         answer_title, answer, highlights = await self._synthesize_answer(request.question, evidence, strategy)
+        recommended_actions = self._recommended_actions(strategy, evidence)
         follow_up_questions = self._suggest_follow_ups(strategy, evidence)
         focus_nodes = request.focus_node_ids or self._focus_nodes_for_response(request.question, strategy, evidence)
         graph = (
@@ -690,6 +764,7 @@ Return a JSON object with:
             answer=answer,
             answer_title=answer_title,
             highlights=highlights,
+            recommended_actions=recommended_actions,
             follow_up_questions=follow_up_questions,
             strategy=strategy,
             warnings=warnings,

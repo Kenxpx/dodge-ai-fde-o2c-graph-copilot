@@ -38,6 +38,7 @@ It decides:
 It also adds the small product touches that make the demo more usable:
 - guided follow-up questions
 - concise answer titles and highlights
+- recommended next-action blocks
 - export-friendly investigation output
 
 ### `backend/app/services/graph_service.py`
@@ -67,6 +68,16 @@ I kept it separate from the chat logic because it solves a different product pro
 This wraps provider-specific API calls so the query service can stay provider-agnostic.
 
 Right now the deployed path uses Gemini, but the app can also support an OpenAI-compatible endpoint.
+
+### `backend/app/services/project_help_service.py`
+
+This powers the right-rail project guide.
+
+I kept it separate from the ERP query path because it answers a different class of questions:
+- how the project is built
+- why key design choices were made
+- how the stack, deployment, and verification fit together
+- who built the project and what the submission contains
 
 ## Semantic model
 
@@ -158,6 +169,7 @@ This is the page-level coordinator. It:
 - bootstraps metadata and the initial graph
 - keeps the chat, graph, and inspector in sync
 - passes selected graph context into the query flow
+- coordinates the separate project-guide chat in the right rail
 
 ### `frontend/src/components/ChatPanel.tsx`
 
@@ -177,7 +189,9 @@ This component is intentionally lightweight. The backend decides what graph slic
 
 ### `frontend/src/components/InspectorPanel.tsx`
 
-This gives the user a direct way to search for known objects and inspect metadata without going through chat first.
+This now acts as a two-mode right rail:
+- entity explorer for direct graph inspection
+- a project-help chatbot for reviewer-facing questions about the build itself
 
 ## Deployment shape
 

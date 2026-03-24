@@ -2,6 +2,7 @@ import type {
   ChatResponse,
   ChatTurn,
   GraphPayload,
+  HelpChatResponse,
   MetaResponse,
   NodeDetail,
   SearchResult,
@@ -50,6 +51,14 @@ export const api = {
         question,
         conversation,
         focus_node_ids: focusNodeIds,
+      }),
+    }),
+  askProjectHelp: (question: string, conversation: ChatTurn[]) =>
+    request<HelpChatResponse>('/api/help/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        question,
+        conversation,
       }),
     }),
 }

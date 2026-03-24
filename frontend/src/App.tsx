@@ -5,7 +5,25 @@ import './App.css'
 import { ChatPanel } from './components/ChatPanel'
 import { GraphCanvas } from './components/GraphCanvas'
 import { InspectorPanel } from './components/InspectorPanel'
-import type { GraphPayload, InboxItem, Message, MetaResponse, NodeDetail, SearchResult } from './types'
+import type { GraphPayload, HelpMessage, InboxItem, Message, MetaResponse, NodeDetail, SearchResult } from './types'
+
+const INITIAL_HELP_MESSAGE: HelpMessage = {
+  role: 'assistant',
+  answer_title: 'Project guide',
+  content:
+    'Ask how the system is built, why the stack was chosen, how the graph and SQL layers stay aligned, how Gemini is grounded, who built the project, or how to run and deploy it.',
+  highlights: [
+    'Covers architecture, data modeling, guardrails, deployment, and submission details.',
+    'Stays focused on the project itself instead of the ERP dataset questions.',
+    'Uses grounded project notes so reviewers can quickly understand the implementation.',
+  ],
+  suggested_questions: [
+    'How is this project structured end to end?',
+    'Why did you choose DuckDB and FastAPI?',
+    'Who built this project and what was the goal?',
+  ],
+  citations: ['README.md', 'docs/ARCHITECTURE.md'],
+}
 
 function App() {
   const [meta, setMeta] = useState<MetaResponse | null>(null)
@@ -15,14 +33,17 @@ function App() {
     focus_node_ids: [],
   })
   const [messages, setMessages] = useState<Message[]>([])
+  const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([INITIAL_HELP_MESSAGE])
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [selectedNode, setSelectedNode] = useState<NodeDetail | null>(null)
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [draft, setDraft] = useState('')
+  const [helpDraft, setHelpDraft] = useState('')
   const [isBootstrapping, setIsBootstrapping] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isHelpSubmitting, setIsHelpSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -97,6 +118,7 @@ function App() {
         content: response.answer,
         answer_title: response.answer_title,
         highlights: response.highlights,
+        recommended_actions: response.recommended_actions,
         follow_up_questions: response.follow_up_questions,
         strategy: response.strategy,
         warnings: response.warnings,
@@ -119,12 +141,49 @@ function App() {
     }
   }
 
+  const runHelpQuestion = async (question: string) => {
+    const nextMessages: HelpMessage[] = [...helpMessages, { role: 'user', content: question }]
+    setHelpMessages(nextMessages)
+    setHelpDraft('')
+    setIsHelpSubmitting(true)
+    setError(null)
+
+    try {
+      const response = await api.askProjectHelp(
+        question,
+        nextMessages.map((message) => ({ role: message.role, content: message.content })),
+      )
+
+      const assistantMessage: HelpMessage = {
+        role: 'assistant',
+        content: response.answer,
+        answer_title: response.answer_title,
+        highlights: response.highlights,
+        suggested_questions: response.suggested_questions,
+        citations: response.citations,
+      }
+      setHelpMessages((current) => [...current, assistantMessage])
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Failed to load project help.')
+    } finally {
+      setIsHelpSubmitting(false)
+    }
+  }
+
   const handleSubmit = async () => {
     const question = draft.trim()
     if (!question) {
       return
     }
     await runQuestion(question)
+  }
+
+  const handleHelpSubmit = async () => {
+    const question = helpDraft.trim()
+    if (!question) {
+      return
+    }
+    await runHelpQuestion(question)
   }
 
   const handlePickResult = async (nodeId: string) => {
@@ -178,6 +237,18 @@ function App() {
     if (message.highlights?.length) {
       lines.push('## Key findings')
       message.highlights.forEach((item) => lines.push(`- ${item}`))
+      lines.push('')
+    }
+
+    if (message.recommended_actions?.length) {
+      lines.push('## Recommended actions')
+      message.recommended_actions.forEach((item) => lines.push(`- ${item}`))
+      lines.push('')
+    }
+
+    if (message.citations?.length) {
+      lines.push('## Sources and trust notes')
+      message.citations.forEach((item) => lines.push(`- ${item}`))
       lines.push('')
     }
 
@@ -295,6 +366,9 @@ function App() {
           selectedNodeId={selectedNodeId}
           search={search}
           searchResults={searchResults}
+          helpMessages={helpMessages}
+          helpDraft={helpDraft}
+          isHelpSubmitting={isHelpSubmitting}
           onSearchChange={setSearch}
           onPickResult={(nodeId) => {
             void handlePickResult(nodeId)
@@ -303,6 +377,13 @@ function App() {
             void handleExpandSelected()
           }}
           onClearSelected={clearSelection}
+          onHelpDraftChange={setHelpDraft}
+          onHelpSubmit={() => {
+            void handleHelpSubmit()
+          }}
+          onHelpExampleClick={(question) => {
+            void runHelpQuestion(question)
+          }}
         />
       </main>
     </div>

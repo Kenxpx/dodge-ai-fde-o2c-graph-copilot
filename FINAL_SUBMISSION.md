@@ -14,6 +14,7 @@ Standout product touches in the current build:
 - operations inbox for incomplete flows, open A/R, cancellations, and missing deliveries
 - guided follow-up questions after each grounded answer
 - exportable investigation briefs
+- a project-guide chatbot for architecture, deployment, and submission questions
 
 ## Uploadable AI Session Logs
 

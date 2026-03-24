@@ -59,6 +59,7 @@ export type ChatResponse = {
   answer: string
   answer_title?: string | null
   highlights: string[]
+  recommended_actions: string[]
   follow_up_questions: string[]
   strategy: string
   warnings: string[]
@@ -66,6 +67,14 @@ export type ChatResponse = {
   sql?: string | null
   evidence?: EvidenceTable | null
   graph: GraphPayload
+}
+
+export type HelpChatResponse = {
+  answer: string
+  answer_title?: string | null
+  highlights: string[]
+  suggested_questions: string[]
+  citations: string[]
 }
 
 export type MetaResponse = {
@@ -88,10 +97,20 @@ export type Message = {
   content: string
   answer_title?: string | null
   highlights?: string[]
+  recommended_actions?: string[]
   follow_up_questions?: string[]
   strategy?: string
   warnings?: string[]
   citations?: string[]
   sql?: string | null
   evidence?: EvidenceTable | null
+}
+
+export type HelpMessage = {
+  role: 'user' | 'assistant'
+  content: string
+  answer_title?: string | null
+  highlights?: string[]
+  suggested_questions?: string[]
+  citations?: string[]
 }

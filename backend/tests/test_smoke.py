@@ -1,7 +1,8 @@
 import asyncio
 
-from app.models import ChatRequest
+from app.models import ChatRequest, HelpChatRequest
 from app.services.inbox_service import InboxService
+from app.services.project_help_service import ProjectHelpService
 from app.services.guardrails import classify_domain
 from app.services.query_service import QueryService
 
@@ -52,5 +53,22 @@ def test_trace_answer_includes_follow_ups_and_graph_focus() -> None:
     )
 
     assert response.answer_title == "Billing document trace"
+    assert response.recommended_actions
     assert response.follow_up_questions
     assert "billing_document:90504298" in response.graph.focus_node_ids
+
+
+def test_project_help_answers_project_questions() -> None:
+    service = ProjectHelpService()
+    response = asyncio.run(
+        service.answer(
+            HelpChatRequest(
+                question="Who built this project and what was the goal?",
+                conversation=[],
+            )
+        )
+    )
+
+    assert response.answer_title
+    assert "Sachin Bindu C" in response.answer
+    assert response.citations

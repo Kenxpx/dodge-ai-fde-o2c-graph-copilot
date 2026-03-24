@@ -11,6 +11,7 @@ This repository is ready for the Dodge AI FDE submission flow, with a few final 
 - Optional `render.yaml` for a simple Render deployment
 - Live Render deployment with Gemini enabled
 - Operations inbox, follow-up questions, and investigation brief export in the shipped UI
+- Right-rail project guide for architecture, setup, and submission questions
 
 ## Files to point reviewers to
 

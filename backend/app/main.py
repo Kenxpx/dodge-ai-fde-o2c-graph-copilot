@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from app.api.graph import router as graph_router
+from app.api.help import router as help_router
 from app.api.meta import router as meta_router
 from app.api.query import router as query_router
 from app.config import get_settings
@@ -49,6 +50,7 @@ def health() -> dict[str, str]:
 
 app.include_router(meta_router)
 app.include_router(graph_router)
+app.include_router(help_router)
 app.include_router(query_router)
 
 
