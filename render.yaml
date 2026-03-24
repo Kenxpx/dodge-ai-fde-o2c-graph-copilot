@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: dodge-ai-o2c-graph-copilot
+    runtime: docker
+    plan: free
+    autoDeploy: false
