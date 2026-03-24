@@ -10,6 +10,7 @@ This repository is ready for the Dodge AI FDE submission flow, with a few final 
 - Dockerized single-service deployment path through `Dockerfile`
 - Optional `render.yaml` for a simple Render deployment
 - Live Render deployment with Gemini enabled
+- Operations inbox, follow-up questions, and investigation brief export in the shipped UI
 
 ## Files to point reviewers to
 

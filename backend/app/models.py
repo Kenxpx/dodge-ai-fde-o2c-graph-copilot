@@ -56,6 +56,17 @@ class EvidenceTable(BaseModel):
     row_count: int
 
 
+class InboxItem(BaseModel):
+    id: str
+    title: str
+    summary: str
+    severity: Literal["high", "medium", "low"]
+    count: int
+    sample_ids: list[str] = Field(default_factory=list)
+    focus_node_ids: list[str] = Field(default_factory=list)
+    drill_question: str
+
+
 class ChatTurn(BaseModel):
     role: Literal["user", "assistant"]
     content: str
@@ -71,6 +82,7 @@ class ChatResponse(BaseModel):
     answer: str
     answer_title: str | None = None
     highlights: list[str] = Field(default_factory=list)
+    follow_up_questions: list[str] = Field(default_factory=list)
     strategy: str
     warnings: list[str] = Field(default_factory=list)
     citations: list[str] = Field(default_factory=list)
@@ -84,3 +96,4 @@ class MetaResponse(BaseModel):
     llm_status: dict[str, Any]
     dataset_stats: dict[str, Any]
     example_queries: list[str]
+    ops_inbox: list[InboxItem] = Field(default_factory=list)

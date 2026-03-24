@@ -39,6 +39,17 @@ export type EvidenceTable = {
   row_count: number
 }
 
+export type InboxItem = {
+  id: string
+  title: string
+  summary: string
+  severity: 'high' | 'medium' | 'low'
+  count: number
+  sample_ids: string[]
+  focus_node_ids: string[]
+  drill_question: string
+}
+
 export type ChatTurn = {
   role: 'user' | 'assistant'
   content: string
@@ -48,6 +59,7 @@ export type ChatResponse = {
   answer: string
   answer_title?: string | null
   highlights: string[]
+  follow_up_questions: string[]
   strategy: string
   warnings: string[]
   citations: string[]
@@ -68,6 +80,7 @@ export type MetaResponse = {
     node_types: Record<string, number>
   }
   example_queries: string[]
+  ops_inbox: InboxItem[]
 }
 
 export type Message = {
@@ -75,6 +88,7 @@ export type Message = {
   content: string
   answer_title?: string | null
   highlights?: string[]
+  follow_up_questions?: string[]
   strategy?: string
   warnings?: string[]
   citations?: string[]

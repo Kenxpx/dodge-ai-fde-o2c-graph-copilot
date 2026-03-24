@@ -4,6 +4,7 @@ from app.config import get_settings
 from app.models import MetaResponse
 from app.services.examples import EXAMPLE_QUERIES
 from app.services.graph_service import GraphService
+from app.services.inbox_service import InboxService
 
 
 router = APIRouter(prefix="/api/meta", tags=["meta"])
@@ -13,6 +14,7 @@ router = APIRouter(prefix="/api/meta", tags=["meta"])
 def get_meta() -> MetaResponse:
     settings = get_settings()
     stats = GraphService().get_meta_stats()
+    inbox = InboxService().get_items()
     provider_ready = False
     if settings.llm_provider == "gemini":
         provider_ready = bool(settings.gemini_api_key)
@@ -28,4 +30,5 @@ def get_meta() -> MetaResponse:
         },
         dataset_stats=stats,
         example_queries=EXAMPLE_QUERIES,
+        ops_inbox=inbox,
     )

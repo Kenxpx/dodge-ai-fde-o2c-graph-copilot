@@ -7,6 +7,11 @@ The app does three things well:
 - surfaces a graph view over the same semantic model used for querying
 - answers natural-language questions with grounded SQL, using deterministic paths first and Gemini only when needed
 
+To make it feel more like a real operator tool, I also added:
+- an operations inbox for high-signal issue buckets
+- guided follow-up questions after each answer
+- exportable investigation briefs for sharing findings
+
 ## Links
 
 - Live demo: `https://dodge-ai-o2c-graph-copilot.onrender.com`
@@ -20,6 +25,8 @@ This project is a full-stack web app with:
 - a semantic layer over the raw SAP exports
 - a materialized graph for exploration
 - a React frontend for graph search, inspection, and grounded chat
+- an operations inbox for incomplete flows, open A/R, cancellations, and missing deliveries
+- answer-linked follow-up suggestions and brief export
 - Gemini-backed SQL planning for broader in-domain questions
 
 The core design choice was to keep the graph layer and the query layer on top of the same business model. I did not want a separate graph representation drifting away from the SQL representation and producing inconsistent answers.
@@ -27,10 +34,11 @@ The core design choice was to keep the graph layer and the query layer on top of
 ## Product walkthrough
 
 The app is designed around a simple workflow:
-1. Ask a business question or search for a known entity.
+1. Start from the operations inbox, ask a business question, or search for a known entity.
 2. Run a grounded query against the semantic O2C model.
-3. Return a short business answer, the supporting evidence, and the executed SQL.
+3. Return a short business answer, guided follow-ups, the supporting evidence, and the executed SQL.
 4. Focus the graph on the same entities so the visual view explains the answer.
+5. Export a brief if the result needs to be shared.
 
 That flow matters more for this task than maximizing feature count. I wanted the app to feel dependable and readable first.
 
@@ -128,6 +136,8 @@ If I were reading this repo cold, I would start here:
   This is the main orchestration layer for deterministic and Gemini-backed queries.
 - `backend/app/services/graph_service.py`
   This is the bridge between answer results and the graph UI.
+- `backend/app/services/inbox_service.py`
+  This powers the operator-focused issue buckets shown in the operations inbox.
 - `frontend/src/App.tsx`
   This shows how the product experience is stitched together.
 
@@ -207,6 +217,9 @@ Verified locally:
 - graph node and edge generation
 - deterministic query flows
 - Gemini fallback query path
+- operations inbox metadata
+- guided follow-up suggestions
+- investigation brief export
 - frontend production build
 - backend smoke tests via `pytest`
 

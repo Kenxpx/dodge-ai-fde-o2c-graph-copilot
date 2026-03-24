@@ -10,6 +10,11 @@ https://dodge-ai-o2c-graph-copilot.onrender.com
 
 Gemini-backed dynamic SQL planning is enabled in the deployed demo.
 
+Standout product touches in the current build:
+- operations inbox for incomplete flows, open A/R, cancellations, and missing deliveries
+- guided follow-up questions after each grounded answer
+- exportable investigation briefs
+
 ## Uploadable AI Session Logs
 
 - `ai-coding-sessions.zip`

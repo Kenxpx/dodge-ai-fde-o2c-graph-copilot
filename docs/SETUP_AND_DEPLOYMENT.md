@@ -39,6 +39,11 @@ The repository includes:
 
 That means a reviewer can clone the repo and run it without fetching anything else.
 
+The product also includes:
+- an operations inbox for high-signal issue buckets
+- guided follow-up questions in the chat experience
+- Markdown brief export for investigation handoff
+
 ## Local setup
 
 ### 1. Create a Python environment
@@ -180,8 +185,10 @@ After a deploy, I usually check:
 - `/`
 - `/api/health`
 - `/api/meta`
+- that `ops_inbox` is present in `/api/meta`
 - one deterministic query
 - one Gemini-backed query
+- one follow-up question from a previous answer
 
 ## Troubleshooting
 

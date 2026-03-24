@@ -35,6 +35,11 @@ It decides:
 - how the final answer should be phrased
 - which graph nodes should be focused after the answer
 
+It also adds the small product touches that make the demo more usable:
+- guided follow-up questions
+- concise answer titles and highlights
+- export-friendly investigation output
+
 ### `backend/app/services/graph_service.py`
 
 This service is intentionally separate from query orchestration.
@@ -47,6 +52,15 @@ It owns:
 - focus-node inference from result sets
 
 The frontend only needs graph payloads; it does not need to know how graph slices are computed.
+
+### `backend/app/services/inbox_service.py`
+
+This service generates the operations inbox shown on the landing view.
+
+I kept it separate from the chat logic because it solves a different product problem:
+- what should an operator look at first
+- which issue buckets are worth surfacing immediately
+- which entities should be pre-focused before a question is even asked
 
 ### `backend/app/llm/providers.py`
 
@@ -148,8 +162,11 @@ This is the page-level coordinator. It:
 ### `frontend/src/components/ChatPanel.tsx`
 
 This component focuses on:
+- surfacing the operations inbox
 - asking questions
 - showing concise answers
+- suggesting reasonable next questions
+- letting a user export a lightweight investigation brief
 - showing evidence and executed SQL only when expanded
 
 The goal was to make the answer readable first and inspectable second.
@@ -181,4 +198,4 @@ Tradeoffs I chose deliberately:
 If this were extended further, I would likely add:
 - saved investigations
 - richer graph filtering
-- follow-up query suggestions based on the selected node
+- role-aware runbooks for each inbox issue bucket
