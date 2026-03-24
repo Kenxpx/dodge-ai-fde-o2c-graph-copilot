@@ -33,6 +33,7 @@ SOURCE_FOLDERS = [
 
 
 def snake_case(name: str) -> str:
+    """Normalize raw export field names into stable SQL column names."""
     normalized = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name)
     normalized = normalized.replace(".", "_").replace("-", "_").replace("/", "_")
     normalized = re.sub(r"[^a-zA-Z0-9_]+", "_", normalized)
@@ -41,6 +42,7 @@ def snake_case(name: str) -> str:
 
 
 def flatten_record(record: dict[str, Any], prefix: str = "") -> dict[str, Any]:
+    """Flatten nested SAP-style JSON into one relational row."""
     flattened: dict[str, Any] = {}
     for key, value in record.items():
         full_key = f"{prefix}_{key}" if prefix else key
@@ -54,6 +56,7 @@ def flatten_record(record: dict[str, Any], prefix: str = "") -> dict[str, Any]:
 
 
 def load_folder(folder_path: Path) -> pd.DataFrame:
+    """Load every JSONL file in a source folder into one dataframe."""
     rows: list[dict[str, Any]] = []
     for file_path in sorted(folder_path.glob("*.jsonl")):
         with file_path.open("r", encoding="utf-8") as handle:
@@ -333,6 +336,8 @@ def _graph_edge(edge_id: str, source_id: str, target_id: str, edge_type: str, la
 
 
 def build_graph_tables(connection: duckdb.DuckDBPyConnection) -> None:
+    # The graph is built from the semantic views rather than the raw tables so the
+    # UI and the query engine stay aligned on the same business concepts.
     nodes: dict[str, dict[str, Any]] = {}
     edges: dict[str, dict[str, Any]] = {}
 
@@ -809,6 +814,7 @@ def build_graph_tables(connection: duckdb.DuckDBPyConnection) -> None:
 
 
 def build_database(connection: duckdb.DuckDBPyConnection, dataset_root: Path) -> None:
+    """Build raw tables, semantic views, graph tables, and bootstrap metadata."""
     if not dataset_root.exists():
         raise FileNotFoundError(f"Dataset directory not found: {dataset_root}")
 
@@ -819,6 +825,9 @@ def build_database(connection: duckdb.DuckDBPyConnection, dataset_root: Path) ->
         connection.execute(f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM {table_name}_df")
         connection.unregister(f"{table_name}_df")
 
+    # This semantic layer is where the raw exports become reviewable. It handles
+    # the item-key normalization and lineage joins once so the rest of the app can
+    # work at the business level instead of repeating join logic everywhere.
     connection.execute(SEMANTIC_SQL)
     build_graph_tables(connection)
     connection.execute(

@@ -16,6 +16,8 @@ from app.services.ingestion import build_database
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    # The submission ships with raw dataset files, so the app can bootstrap its own
+    # analytical store on first start instead of depending on a separate migration step.
     settings = get_settings()
     with get_connection(read_only=False) as connection:
         needs_bootstrap = not settings.db_path.exists()
@@ -55,6 +57,8 @@ frontend_dist = settings.base_dir / "frontend" / "dist"
 
 @app.get("/", include_in_schema=False, response_model=None)
 def serve_root():
+    # In production the frontend is built ahead of time and served by FastAPI,
+    # which keeps the deployment as a single service.
     index_path = frontend_dist / "index.html"
     if index_path.exists():
         return FileResponse(index_path)
@@ -66,6 +70,7 @@ def serve_spa(full_path: str):
     if full_path.startswith("api/"):
         raise HTTPException(status_code=404, detail="Not found")
 
+    # Let the React app handle client-side routes while still serving hashed assets directly.
     requested_path = frontend_dist / full_path
     if requested_path.exists() and requested_path.is_file():
         return FileResponse(requested_path)

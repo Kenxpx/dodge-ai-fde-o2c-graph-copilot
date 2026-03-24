@@ -28,6 +28,8 @@ function App() {
   useEffect(() => {
     const bootstrap = async () => {
       try {
+        // Load the app shell and a small starter graph together so the first
+        // screen feels complete instead of progressively filling in piece by piece.
         const [nextMeta, nextGraph] = await Promise.all([
           api.getMeta(),
           api.getInitialGraph(),
@@ -114,6 +116,7 @@ function App() {
         selectedNodeId ? [selectedNodeId] : [],
       )
 
+      // Each answer already comes with the graph slice that best explains it.
       startTransition(() => setGraph(response.graph))
       const assistantMessage: Message = {
         role: 'assistant',
@@ -141,7 +144,7 @@ function App() {
 
   const stats = meta?.dataset_stats.totals
   const selectedContextLabel = selectedNode
-    ? `${selectedNode.label}${selectedNode.subtitle ? ` • ${selectedNode.subtitle}` : ''}`
+    ? `${selectedNode.label}${selectedNode.subtitle ? ` | ${selectedNode.subtitle}` : ''}`
     : null
 
   return (

@@ -1,163 +1,143 @@
 # Order-to-Cash Intelligence Copilot
 
-A full-stack submission for the Dodge AI Forward Deployed Engineer take-home. The app ingests the provided SAP order-to-cash dataset, constructs a context graph over the business entities, visualizes relationships in the browser, and answers natural-language questions with grounded DuckDB SQL and Gemini-backed fallback planning.
+An analyst-facing copilot for the SAP order-to-cash dataset used in the Dodge AI FDE take-home.
 
-## Live Demo
+The app does three things well:
+- traces business objects across sales order, delivery, billing, A/R, and payment clearance
+- surfaces a graph view over the same semantic model used for querying
+- answers natural-language questions with grounded SQL, using deterministic paths first and Gemini only when needed
 
-- Demo: `https://dodge-ai-o2c-graph-copilot.onrender.com`
-- Repository: `https://github.com/Kenxpx/dodge-ai-fde-o2c-graph-copilot`
+## Links
 
-## What It Does
+- Live demo: `https://dodge-ai-o2c-graph-copilot.onrender.com`
+- Public repository: `https://github.com/Kenxpx/dodge-ai-fde-o2c-graph-copilot`
 
-- Builds a graph over customers, addresses, sales orders, order items, schedule summaries, deliveries, delivery items, billing documents, billing items, accounting documents, payment clearances, products, and plants.
-- Normalizes the tricky ERP join paths:
-  - `sales_order_item -> delivery_item -> billing_item`
-  - cancellation documents through `billing_document_type = 'S1'` and `cancelled_billing_document`
-  - AR clearing through `accounting_document_id -> payment_document_id`
-- Exposes graph APIs for initial exploration, node search, node inspection, and neighborhood expansion.
-- Supports grounded chat with:
-  - deterministic query templates for the assignment's core questions
-  - Gemini-based NL-to-SQL planning for broader in-domain questions
-  - SQL validation and read-only guardrails
-  - concise business summaries, evidence preview, and executed SQL in the UI
+## What I built
 
-## Architecture
+This project is a full-stack web app with:
+- a FastAPI backend
+- DuckDB as the analytical store
+- a semantic layer over the raw SAP exports
+- a materialized graph for exploration
+- a React frontend for graph search, inspection, and grounded chat
+- Gemini-backed SQL planning for broader in-domain questions
 
-### Backend
+The core design choice was to keep the graph layer and the query layer on top of the same business model. I did not want a separate graph representation drifting away from the SQL representation and producing inconsistent answers.
 
-- **FastAPI** for the API layer and app lifecycle.
-- **DuckDB** as the analytical store.
-  - Reason for choosing DuckDB:
-    - excellent fit for local analytics and read-heavy SQL
-    - zero external infrastructure
-    - fast enough to rebuild the full semantic layer on startup
-    - ideal for grounded LLM answers because the final execution target is SQL
-- **Semantic views** over the raw JSONL tables:
-  - `v_sales_orders`
-  - `v_sales_order_items`
-  - `v_deliveries`
-  - `v_delivery_items`
-  - `v_billing_documents`
-  - `v_billing_items`
-  - `v_accounting_documents`
-  - `v_payment_clearances`
-  - `v_customers`
-  - `v_products`
-  - `v_plants`
-  - `o2c_flow`
+## Product walkthrough
 
-### Why `o2c_flow`
+The app is designed around a simple workflow:
+1. Ask a business question or search for a known entity.
+2. Run a grounded query against the semantic O2C model.
+3. Return a short business answer, the supporting evidence, and the executed SQL.
+4. Focus the graph on the same entities so the visual view explains the answer.
 
-The key modeling decision is the flattened `o2c_flow` view at the sales-order-item grain. It keeps the system simple and evaluator-friendly:
+That flow matters more for this task than maximizing feature count. I wanted the app to feel dependable and readable first.
 
-- most business questions can be answered from one grounded table
-- incomplete flow detection becomes straightforward
-- tracing from invoice to order or payment becomes easy
-- the LLM has fewer joins to reason about, which lowers hallucination risk
+## Why this architecture
 
-### Graph Model
+### DuckDB
 
-The graph is materialized into:
+I chose DuckDB because the dataset is analytical, read-heavy, and small enough to rebuild locally without extra infrastructure. It made the project easy to run, easy to deploy, and easy to ground LLM answers in actual query execution.
 
-- `graph_nodes`
-- `graph_edges`
+### Semantic views before any chat logic
 
-Each node stores:
+The raw dataset has the usual ERP quirks:
+- item identifiers do not always match format across tables
+- billing items reference delivery items, not sales orders directly
+- cancellation documents need special handling
+- accounting and payment linkage is indirect
 
-- `node_id`
-- `node_type`
-- `label`
-- `subtitle`
-- `metadata_json`
-- `search_text`
+Instead of pushing that complexity into prompts or frontend code, I resolved it once in the semantic layer and treated `o2c_flow` as the main business-facing table.
 
-Each edge stores:
+### Deterministic first, LLM second
 
-- `source_id`
-- `target_id`
-- `edge_type`
-- `label`
-- `metadata_json`
+The most important evaluator flows are predictable:
+- top products
+- top customers
+- billing trace
+- incomplete flows
+- cancellations
+- open A/R
 
-This gives us a real graph experience in the UI without forcing the core query engine into a graph database. The graph and the SQL layer share the same semantic model instead of drifting apart.
+Those paths should not depend on an LLM. I kept them deterministic so the app remains strong even when the model is unavailable, and then used Gemini for broader in-domain questions that are genuinely more open-ended.
 
-## LLM Strategy
+## High-level architecture
 
-The query engine uses a hybrid strategy.
+```text
+Raw JSONL dataset
+  -> ingestion.py
+  -> raw DuckDB tables
+  -> semantic SQL views
+  -> graph_nodes / graph_edges
+  -> FastAPI APIs
+  -> React graph + chat UI
+```
 
-### 1. Deterministic first
+## Important modeling decisions
 
-For the assignment's highest-signal questions, the app prefers deterministic SQL templates:
+### 1. `o2c_flow` is the center of the system
 
-- top products by billing-document count
-- top customers by billing-document count
-- full billing-document flow trace
-- incomplete or broken flows
-- cancellation analysis
-- open A/R items not cleared by payment
+`o2c_flow` is a flattened view at roughly the sales-order-item grain. It is the safest place to answer most business questions because it already carries the lineage between:
+- sales orders
+- delivery items
+- billing items
+- accounting documents
+- payment clearances
 
-This keeps the demo strong even without an LLM provider.
+This reduced both query complexity and hallucination risk.
 
-### 2. LLM fallback for open-ended domain questions
+### 2. Cancellation handling is explicit
 
-If the question is in-domain but not covered by a built-in template, the app can call:
+Cancellation documents are modeled through:
+- `billing_document_type = 'S1'`
+- `cancelled_billing_document`
 
-- **Gemini** via the official Google Generative Language API
-- **OpenAI-compatible** endpoints such as OpenRouter or Groq
+That logic is baked into the semantic layer and surfaced in both SQL answers and graph edges.
 
-The LLM receives:
+### 3. The graph is materialized, not improvised in the UI
 
-- a tight schema guide
-- explicit SQL constraints
-- domain-specific modeling notes
-- a requirement to emit one read-only DuckDB `SELECT`
+I materialized `graph_nodes` and `graph_edges` from the semantic views. That keeps search, inspection, and answer-linked graph focus fast and predictable.
 
-### 3. SQL validation
+## Query strategy
 
-All LLM-generated SQL is validated with `sqlglot`:
+The backend query service uses three layers:
 
-- disallows write operations
-- disallows non-approved tables
-- strips markdown fences
-- enforces a row limit
+### 1. Guardrails
 
-### 4. Answer synthesis
+Off-domain prompts are rejected before any SQL generation.
 
-Answers are always grounded in the SQL result set. The UI also surfaces:
+### 2. Deterministic templates
 
-- executed SQL
-- evidence rows
-- warnings or caveats
+Known evaluator questions map directly to SQL templates.
 
-## Guardrails
+### 3. Gemini fallback
 
-The system rejects off-domain prompts before query generation.
+If the question is in-domain but not covered by a built-in template, Gemini proposes SQL. That SQL is:
+- validated as read-only
+- restricted to approved tables
+- capped with a row limit
+- automatically repaired once if the model makes a schema-level mistake
 
-Current guardrails include:
+## Reviewer guide
 
-- domain keyword and identifier checks
-- rejection of clearly unrelated prompts such as creative writing or general knowledge
-- SQL validation against a strict allowlist
-- read-only execution only
+If I were reading this repo cold, I would start here:
+- `backend/app/services/ingestion.py`
+  This is where the dataset becomes a usable business model.
+- `backend/app/services/query_service.py`
+  This is the main orchestration layer for deterministic and Gemini-backed queries.
+- `backend/app/services/graph_service.py`
+  This is the bridge between answer results and the graph UI.
+- `frontend/src/App.tsx`
+  This shows how the product experience is stitched together.
 
-The rejection message is intentionally simple:
+## Additional docs
 
-> This system is designed to answer questions related to the provided SAP order-to-cash dataset only.
+- `docs/ARCHITECTURE.md`
+- `docs/SETUP_AND_DEPLOYMENT.md`
+- `docs/AI_SESSION_LOG.md`
 
-## Frontend
-
-- **React + Vite + TypeScript**
-- **Cytoscape.js** for graph rendering
-
-The UI has three working surfaces:
-
-- **Grounded chat** for natural-language questions
-- **Context graph** for relationship exploration
-- **Node inspector** for metadata and neighborhood summary
-
-The visual design deliberately avoids generic dashboard defaults. It uses a warm operations-focused palette and emphasizes graph context over decorative chrome.
-
-## Project Structure
+## Project structure
 
 ```text
 backend/
@@ -176,11 +156,11 @@ Dockerfile
 README.md
 ```
 
-## Run Locally
+## Running locally
 
 ### Backend
 
-On Windows, if your default `python` points to MSYS or another environment without DuckDB wheels, prefer native CPython through `py -3.11`.
+On Windows, native CPython works better than MSYS Python for DuckDB wheels.
 
 ```powershell
 py -3.11 -m venv .venv
@@ -200,38 +180,38 @@ npm run dev
 
 The Vite dev server proxies `/api` to `http://localhost:8000`.
 
-### Single-service deployment
+## Deployment
 
-The repo also supports a single-service deployment path. The Docker image builds the React frontend, bundles the dataset, and serves the built SPA directly from FastAPI.
+The live demo runs as a single Render web service:
+- frontend built into static assets
+- FastAPI serving API routes plus the built SPA
+- dataset bundled with the container
 
-```powershell
-docker build -t dodge-ai-o2c-graph-copilot .
-docker run --rm -p 8000:8000 dodge-ai-o2c-graph-copilot
-```
+See:
+- `docs/SETUP_AND_DEPLOYMENT.md`
+- `docs/ARCHITECTURE.md`
 
-If you want LLM fallback in production, pass the same environment variables documented in `.env.example`.
+## Environment variables
 
-## Example Questions
+See `.env.example` for the supported variables.
 
-- Which products are associated with the highest number of billing documents?
-- Trace the full flow of billing document `90504298`.
-- Identify sales orders that have broken or incomplete flows.
-- Which billing documents are cancelled and what are their cancellation documents?
-- Show me open accounting documents that have not been cleared by a payment.
+The deployed app currently uses:
+- `APP_ENV=production`
+- `LLM_PROVIDER=gemini`
+- `GEMINI_MODEL=gemini-2.5-flash`
 
 ## Verification
 
 Verified locally:
-
-- dataset ingestion into DuckDB
+- ingestion and semantic-layer build
 - graph node and edge generation
-- graph search and node inspection APIs
-- deterministic trace and ranking queries
-- frontend production build via `npm run build`
+- deterministic query flows
+- Gemini fallback query path
+- frontend production build
 - backend smoke tests via `pytest`
 
-## Notes For Evaluation
+## Notes for evaluation
 
-- The strongest modeling choice here is the unified semantic layer shared by the SQL engine and graph UI.
-- The system explicitly handles one of the hardest parts of this dataset: cancellations and item-number normalization.
-- Gemini is enabled in the deployed demo, but deterministic paths still cover the highest-signal evaluator workflows.
+- I optimized for clarity and groundedness over breadth.
+- The hardest parts of this dataset are not UI problems; they are modeling problems. Most of the work went into resolving lineage and cancellation semantics cleanly.
+- Gemini is enabled in production, but the most important evaluator flows are still deterministic so the app stays reliable.

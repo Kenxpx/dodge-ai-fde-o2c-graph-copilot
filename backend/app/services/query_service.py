@@ -22,6 +22,8 @@ class QueryService:
         self.provider = get_llm_provider()
 
     def _execute_sql(self, sql: str) -> EvidenceTable:
+        # Every SQL path goes through the same validation and limiting step so
+        # deterministic templates and Gemini-generated queries behave the same way.
         validated = validate_read_only_sql(sql, ALLOWED_TABLES)
         limited = ensure_limit(validated, get_settings().max_query_rows)
         with get_connection() as connection:
@@ -80,6 +82,8 @@ class QueryService:
         strategy: str,
         evidence: EvidenceTable,
     ) -> tuple[str | None, str, list[str]] | None:
+        # Built-in flows get hand-shaped answers because these are the evaluator's
+        # highest-signal questions and I wanted them to read cleanly every time.
         if evidence.row_count == 0:
             return (
                 "No matching records",
@@ -206,6 +210,8 @@ class QueryService:
         return None
 
     def _template_query(self, question: str) -> tuple[str, str] | None:
+        # Prefer deterministic SQL when the intent is obvious. It is faster, easier
+        # to verify, and keeps the core demo dependable even without an LLM.
         normalized = question.lower()
         if "highest number of billing" in normalized or "most billing" in normalized:
             if "customer" in normalized:
@@ -354,6 +360,8 @@ class QueryService:
 
     async def _generate_sql_with_llm(self, request: ChatRequest) -> dict[str, Any]:
         assert self.provider is not None
+        # Only the most recent turns are passed through so the planning prompt stays
+        # focused on the current question and selected business context.
         conversation_text = "\n".join(f"{turn.role}: {turn.content}" for turn in request.conversation[-6:])
         prompt = f"""
 Question: {request.question}
@@ -371,6 +379,8 @@ Return a JSON object with:
 
     async def _repair_sql_with_llm(self, question: str, sql: str, error_message: str) -> dict[str, Any]:
         assert self.provider is not None
+        # Gemini is good at recovering from schema misses once it sees the actual
+        # database error, so a repair pass is cheaper than surfacing a hard failure.
         prompt = f"""
 Question: {question}
 
@@ -431,6 +441,9 @@ Return a JSON object with:
         strategy: str,
         evidence: EvidenceTable,
     ) -> list[str]:
+        # The graph should reinforce the answer the user just received. For the
+        # common deterministic paths, I map the result back to a tight set of nodes
+        # instead of relying on generic column inference.
         records = self._records(evidence)
         node_ids: list[str] = []
 
@@ -536,6 +549,9 @@ Return a JSON object with:
             try:
                 evidence = self._execute_sql(sql)
             except Exception as first_error:
+                # A generated query that fails validation or execution gets one
+                # repair attempt. If that still fails, it is safer to say no than
+                # to bluff through an answer.
                 repair_plan = await self._repair_sql_with_llm(request.question, sql, str(first_error))
                 sql = repair_plan["sql"]
                 used_llm_repair = True

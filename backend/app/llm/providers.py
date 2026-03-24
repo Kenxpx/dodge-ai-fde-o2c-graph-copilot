@@ -24,6 +24,8 @@ class BaseLLMProvider:
 
     @staticmethod
     def _parse_json_text(text: str) -> dict[str, Any]:
+        # Providers are asked for JSON, but they still occasionally wrap it in fences
+        # or add a short preamble. This keeps the higher-level query flow simple.
         cleaned = text.strip()
         if cleaned.startswith("```"):
             cleaned = cleaned.strip("`")
@@ -45,6 +47,8 @@ class GeminiProvider(BaseLLMProvider):
         if not settings.gemini_api_key:
             raise RuntimeError("Missing GEMINI_API_KEY.")
 
+        # The prompt stays intentionally small here because the schema guide is already
+        # doing the heavy lifting for query quality and guardrails.
         payload: dict[str, Any] = {
             "system_instruction": {"parts": [{"text": system_prompt}]},
             "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
@@ -117,6 +121,7 @@ class OpenAICompatibleProvider(BaseLLMProvider):
 
 def get_llm_provider() -> BaseLLMProvider | None:
     settings = get_settings()
+    # The query service can stay provider-agnostic if model selection happens here.
     if settings.llm_provider == "gemini":
         return GeminiProvider()
     if settings.llm_provider == "openai_compatible":

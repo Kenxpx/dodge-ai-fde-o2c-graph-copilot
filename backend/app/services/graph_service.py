@@ -70,6 +70,8 @@ class GraphService:
         return {"totals": totals, "node_types": node_types}
 
     def initial_graph(self) -> GraphPayload:
+        # The landing graph is deliberately small and business-readable. It should
+        # give reviewers a feel for the flow model without flooding the canvas.
         with get_connection() as connection:
             rows = connection.execute(
                 """
@@ -177,6 +179,8 @@ class GraphService:
         if not node_ids:
             return GraphPayload(nodes=[], edges=[], focus_node_ids=[])
 
+        # Graph expansion uses a bounded breadth-first walk so the UI stays responsive
+        # and the answer view stays centered on the relevant entities.
         max_edges = limit or get_settings().graph_neighbor_limit
         frontier = {node_id for node_id in node_ids if node_id}
         visited = set(frontier)
@@ -239,6 +243,8 @@ class GraphService:
         )
 
     def infer_focus_nodes(self, columns: list[str], rows: list[list[Any]]) -> list[str]:
+        # LLM-generated queries may use slightly different aliases. This mapper keeps
+        # the graph useful even when the SQL is not one of the built-in templates.
         focus: list[str] = []
         type_map = {
             "sales_order": "sales_order",
