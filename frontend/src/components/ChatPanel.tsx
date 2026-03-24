@@ -14,6 +14,8 @@ type ChatPanelProps = {
   onExampleClick: (value: string) => void
   onInvestigateInbox: (item: InboxItem) => void
   onFollowUpClick: (value: string) => void
+  onCopyMessage: (messageIndex: number) => void
+  onCopySql: (messageIndex: number) => void
   onExportMessage: (messageIndex: number) => void
 }
 
@@ -61,6 +63,8 @@ export function ChatPanel({
   onExampleClick,
   onInvestigateInbox,
   onFollowUpClick,
+  onCopyMessage,
+  onCopySql,
   onExportMessage,
 }: ChatPanelProps) {
   return (
@@ -148,6 +152,14 @@ export function ChatPanel({
 
             {message.answer_title ? <h3 className="message-title">{message.answer_title}</h3> : null}
             <div className="message-body">{message.content}</div>
+
+            {message.role === 'assistant' ? (
+              <div className="answer-meta-row">
+                <span className="answer-meta-pill">{strategyLabel(message.strategy) ?? 'Grounded answer'}</span>
+                {message.evidence ? <span className="answer-meta-pill">{message.evidence.row_count} evidence rows</span> : null}
+                {message.graph_focus_count ? <span className="answer-meta-pill">{message.graph_focus_count} focused entities</span> : null}
+              </div>
+            ) : null}
 
             {message.highlights?.length ? (
               <ul className="highlight-list">
@@ -237,6 +249,14 @@ export function ChatPanel({
 
             {message.role === 'assistant' ? (
               <div className="message-actions">
+                <button type="button" className="secondary-button" onClick={() => onCopyMessage(index)}>
+                  Copy answer
+                </button>
+                {message.sql ? (
+                  <button type="button" className="secondary-button" onClick={() => onCopySql(index)}>
+                    Copy SQL
+                  </button>
+                ) : null}
                 <button type="button" className="secondary-button" onClick={() => onExportMessage(index)}>
                   Export brief
                 </button>

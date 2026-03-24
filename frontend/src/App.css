@@ -82,6 +82,15 @@
   flex-wrap: wrap;
 }
 
+.workspace-action {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--muted-strong);
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -406,6 +415,23 @@
   color: var(--text);
 }
 
+.answer-meta-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.answer-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fafafb;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
 .highlight-list,
 .action-list {
   margin: 0;
@@ -497,6 +523,8 @@
 .message-actions {
   display: flex;
   justify-content: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .table-scroll {
@@ -621,6 +649,20 @@
   align-items: end;
   gap: 16px;
   border-bottom: 1px solid var(--border);
+}
+
+.graph-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.graph-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .graph-canvas {
@@ -863,7 +905,8 @@
   .composer-footer,
   .context-badge-row,
   .ops-inbox-header,
-  .graph-header {
+  .graph-header,
+  .graph-side {
     grid-template-columns: 1fr;
     display: grid;
   }

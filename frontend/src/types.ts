@@ -99,6 +99,7 @@ export type Message = {
   highlights?: string[]
   recommended_actions?: string[]
   follow_up_questions?: string[]
+  graph_focus_count?: number
   strategy?: string
   warnings?: string[]
   citations?: string[]

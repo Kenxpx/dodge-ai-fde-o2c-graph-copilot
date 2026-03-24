@@ -6,6 +6,7 @@ import type { GraphPayload } from '../types'
 type GraphCanvasProps = {
   graph: GraphPayload
   selectedNodeId: string | null
+  onResetGraph: () => void
   onSelectNode: (nodeId: string) => void
 }
 
@@ -82,7 +83,7 @@ const graphStylesheet: any[] = [
   },
 ]
 
-export function GraphCanvas({ graph, selectedNodeId, onSelectNode }: GraphCanvasProps) {
+export function GraphCanvas({ graph, selectedNodeId, onResetGraph, onSelectNode }: GraphCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const cyRef = useRef<Core | null>(null)
   const onSelectRef = useRef(onSelectNode)
@@ -90,6 +91,41 @@ export function GraphCanvas({ graph, selectedNodeId, onSelectNode }: GraphCanvas
   useEffect(() => {
     onSelectRef.current = onSelectNode
   }, [onSelectNode])
+
+  const fitGraph = () => {
+    cyRef.current?.fit(undefined, 36)
+  }
+
+  const centerFocus = () => {
+    const cy = cyRef.current
+    if (!cy) {
+      return
+    }
+    if (graph.focus_node_ids.length > 0) {
+      const focusElements = graph.focus_node_ids
+        .map((nodeId) => cy.getElementById(nodeId))
+        .filter((element) => element.length > 0) as any
+      cy.fit(cy.collection(focusElements), 52)
+      return
+    }
+    cy.fit(undefined, 36)
+  }
+
+  const exportPng = () => {
+    const cy = cyRef.current
+    if (!cy) {
+      return
+    }
+    const dataUrl = cy.png({
+      bg: '#ffffff',
+      full: true,
+      scale: 2,
+    })
+    const link = document.createElement('a')
+    link.href = dataUrl
+    link.download = 'o2c-context-map.png'
+    link.click()
+  }
 
   useEffect(() => {
     if (!containerRef.current) {
@@ -154,9 +190,27 @@ export function GraphCanvas({ graph, selectedNodeId, onSelectNode }: GraphCanvas
           <h2>Follow the entities behind each answer</h2>
           <p className="panel-subcopy">Select any node to inspect it, or use the right rail to search directly for a known object.</p>
         </div>
-        <div className="graph-badges">
-          <span>{graph.nodes.length} nodes</span>
-          <span>{graph.edges.length} edges</span>
+        <div className="graph-side">
+          <div className="graph-badges">
+            {graph.focus_node_ids.length > 0 ? <span>{graph.focus_node_ids.length} focused</span> : null}
+            {selectedNodeId ? <span>1 selected</span> : null}
+            <span>{graph.nodes.length} nodes</span>
+            <span>{graph.edges.length} edges</span>
+          </div>
+          <div className="graph-actions">
+            <button type="button" className="secondary-button" onClick={fitGraph}>
+              Fit
+            </button>
+            <button type="button" className="secondary-button" onClick={centerFocus}>
+              Center focus
+            </button>
+            <button type="button" className="secondary-button" onClick={exportPng}>
+              Export PNG
+            </button>
+            <button type="button" className="secondary-button" onClick={onResetGraph}>
+              Reset map
+            </button>
+          </div>
         </div>
       </div>
       <div className="graph-canvas" ref={containerRef} />

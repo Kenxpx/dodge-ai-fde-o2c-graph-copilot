@@ -27,11 +27,13 @@ const INITIAL_HELP_MESSAGE: HelpMessage = {
 
 function App() {
   const [meta, setMeta] = useState<MetaResponse | null>(null)
-  const [graph, setGraph] = useState<GraphPayload>({
+  const emptyGraph: GraphPayload = {
     nodes: [],
     edges: [],
     focus_node_ids: [],
-  })
+  }
+  const [graph, setGraph] = useState<GraphPayload>(emptyGraph)
+  const [initialGraph, setInitialGraph] = useState<GraphPayload>(emptyGraph)
   const [messages, setMessages] = useState<Message[]>([])
   const [helpMessages, setHelpMessages] = useState<HelpMessage[]>([INITIAL_HELP_MESSAGE])
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
@@ -56,6 +58,7 @@ function App() {
           api.getInitialGraph(),
         ])
         setMeta(nextMeta)
+        setInitialGraph(nextGraph)
         startTransition(() => setGraph(nextGraph))
       } catch (reason) {
         setError(reason instanceof Error ? reason.message : 'Failed to load the app.')
@@ -120,6 +123,7 @@ function App() {
         highlights: response.highlights,
         recommended_actions: response.recommended_actions,
         follow_up_questions: response.follow_up_questions,
+        graph_focus_count: response.graph.focus_node_ids.length,
         strategy: response.strategy,
         warnings: response.warnings,
         citations: response.citations,
@@ -212,6 +216,40 @@ function App() {
     await runQuestion(item.drill_question, item.focus_node_ids)
   }
 
+  const handleResetWorkspace = async () => {
+    setDraft('')
+    setSearch('')
+    setSearchResults([])
+    clearSelection()
+    setError(null)
+
+    if (initialGraph.nodes.length > 0 || initialGraph.edges.length > 0) {
+      startTransition(() => setGraph(initialGraph))
+      return
+    }
+
+    try {
+      const nextGraph = await api.getInitialGraph()
+      setInitialGraph(nextGraph)
+      startTransition(() => setGraph(nextGraph))
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Failed to reset workspace.')
+    }
+  }
+
+  const handleRefreshOverview = async () => {
+    try {
+      const [nextMeta, nextGraph] = await Promise.all([api.getMeta(), api.getInitialGraph()])
+      setMeta(nextMeta)
+      setInitialGraph(nextGraph)
+      startTransition(() => setGraph(nextGraph))
+      clearSelection()
+      setError(null)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Failed to refresh overview.')
+    }
+  }
+
   const handleExportMessage = (messageIndex: number) => {
     const message = messages[messageIndex]
     if (!message || message.role !== 'assistant') {
@@ -278,6 +316,32 @@ function App() {
     URL.revokeObjectURL(url)
   }
 
+  const handleCopyMessage = async (messageIndex: number) => {
+    const message = messages[messageIndex]
+    if (!message || message.role !== 'assistant') {
+      return
+    }
+
+    const parts = [message.answer_title, message.content]
+    if (message.highlights?.length) {
+      parts.push('', 'Key findings:')
+      message.highlights.forEach((item) => parts.push(`- ${item}`))
+    }
+    if (message.recommended_actions?.length) {
+      parts.push('', 'Recommended actions:')
+      message.recommended_actions.forEach((item) => parts.push(`- ${item}`))
+    }
+    await navigator.clipboard.writeText(parts.filter(Boolean).join('\n'))
+  }
+
+  const handleCopySql = async (messageIndex: number) => {
+    const message = messages[messageIndex]
+    if (!message?.sql) {
+      return
+    }
+    await navigator.clipboard.writeText(message.sql)
+  }
+
   const stats = meta?.dataset_stats.totals
   const selectedContextLabel = selectedNode
     ? `${selectedNode.label}${selectedNode.subtitle ? ` | ${selectedNode.subtitle}` : ''}`
@@ -321,6 +385,12 @@ function App() {
           {meta?.llm_status.provider === 'gemini' ? 'Gemini ready' : 'LLM fallback disabled'}
         </span>
         <span className="status-pill neutral">Operations inbox and guided flows</span>
+        <button type="button" className="workspace-action" onClick={() => void handleResetWorkspace()}>
+          Reset workspace
+        </button>
+        <button type="button" className="workspace-action" onClick={() => void handleRefreshOverview()}>
+          Refresh overview
+        </button>
       </div>
 
       {error ? <div className="error-banner">{error}</div> : null}
@@ -344,6 +414,12 @@ function App() {
           onFollowUpClick={(query) => {
             void runQuestion(query)
           }}
+          onCopyMessage={(messageIndex) => {
+            void handleCopyMessage(messageIndex)
+          }}
+          onCopySql={(messageIndex) => {
+            void handleCopySql(messageIndex)
+          }}
           onExportMessage={handleExportMessage}
         />
 
@@ -354,6 +430,9 @@ function App() {
             <GraphCanvas
               graph={graph}
               selectedNodeId={selectedNodeId}
+              onResetGraph={() => {
+                void handleResetWorkspace()
+              }}
               onSelectNode={(nodeId) => {
                 void loadNode(nodeId)
               }}
