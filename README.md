@@ -1,6 +1,11 @@
-# Dodge AI O2C Graph Copilot
+# Order-to-Cash Intelligence Copilot
 
-A full-stack submission for the Dodge AI Forward Deployed Engineer take-home. The app ingests the provided SAP order-to-cash dataset, constructs a context graph over the business entities, visualizes relationships in the browser, and answers natural-language questions with grounded DuckDB SQL.
+A full-stack submission for the Dodge AI Forward Deployed Engineer take-home. The app ingests the provided SAP order-to-cash dataset, constructs a context graph over the business entities, visualizes relationships in the browser, and answers natural-language questions with grounded DuckDB SQL and Gemini-backed fallback planning.
+
+## Live Demo
+
+- Demo: `https://dodge-ai-o2c-graph-copilot.onrender.com`
+- Repository: `https://github.com/Kenxpx/dodge-ai-fde-o2c-graph-copilot`
 
 ## What It Does
 
@@ -12,9 +17,9 @@ A full-stack submission for the Dodge AI Forward Deployed Engineer take-home. Th
 - Exposes graph APIs for initial exploration, node search, node inspection, and neighborhood expansion.
 - Supports grounded chat with:
   - deterministic query templates for the assignment's core questions
-  - optional LLM-based NL-to-SQL planning when an API key is configured
+  - Gemini-based NL-to-SQL planning for broader in-domain questions
   - SQL validation and read-only guardrails
-  - evidence preview and executed SQL in the UI
+  - concise business summaries, evidence preview, and executed SQL in the UI
 
 ## Architecture
 
@@ -85,12 +90,13 @@ The query engine uses a hybrid strategy.
 For the assignment's highest-signal questions, the app prefers deterministic SQL templates:
 
 - top products by billing-document count
+- top customers by billing-document count
 - full billing-document flow trace
 - incomplete or broken flows
 - cancellation analysis
 - open A/R items not cleared by payment
 
-This keeps the demo strong even with `LLM_PROVIDER=none`.
+This keeps the demo strong even without an LLM provider.
 
 ### 2. LLM fallback for open-ended domain questions
 
@@ -228,4 +234,4 @@ Verified locally:
 
 - The strongest modeling choice here is the unified semantic layer shared by the SQL engine and graph UI.
 - The system explicitly handles one of the hardest parts of this dataset: cancellations and item-number normalization.
-- The LLM path is optional by design, so the app remains demoable even without API credentials.
+- Gemini is enabled in the deployed demo, but deterministic paths still cover the highest-signal evaluator workflows.

@@ -94,7 +94,8 @@ class GraphService:
                     f"customer:{customer_id}" if customer_id else None,
                 ]
             )
-        return self.subgraph([node_id for node_id in seed_nodes if node_id], depth=1, limit=72)
+        deduped_seed_nodes = list(dict.fromkeys(node_id for node_id in seed_nodes if node_id))
+        return self.subgraph(deduped_seed_nodes, depth=1, limit=72)
 
     def search(self, query: str, limit: int = 10) -> list[SearchResult]:
         normalized = f"%{query.lower()}%"
@@ -249,6 +250,9 @@ class GraphService:
             "payment_document_id": "payment_document",
             "customer_id": "customer",
             "product_id": "product",
+            "plant": "plant",
+            "delivery_plant_name": "plant",
+            "production_plant_name": "plant",
             "delivery_plant": "plant",
             "production_plant": "plant",
         }
