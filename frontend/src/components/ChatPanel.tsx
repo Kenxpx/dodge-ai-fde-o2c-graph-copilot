@@ -100,27 +100,32 @@ export function ChatPanel({
             <span className="pill">{inboxItems.length} issue buckets</span>
           </div>
 
-          <div className="ops-inbox-grid">
+          <div className="ops-inbox-list">
             {inboxItems.map((item) => (
-              <article key={item.id} className="inbox-card">
-                <div className="inbox-card-top">
-                  <span className={`severity-pill ${item.severity}`}>{severityLabel(item.severity)}</span>
-                  <strong>{item.count}</strong>
-                </div>
-                <h4>{item.title}</h4>
-                <p>{item.summary}</p>
-                {item.sample_ids.length ? (
-                  <div className="sample-chip-row">
-                    {item.sample_ids.map((sampleId) => (
-                      <span key={sampleId} className="sample-chip">
-                        {sampleId}
-                      </span>
-                    ))}
+              <article key={item.id} className="inbox-row">
+                <div className="inbox-row-main">
+                  <div className="inbox-row-top">
+                    <h4>{item.title}</h4>
+                    <span className={`severity-pill ${item.severity}`}>{severityLabel(item.severity)}</span>
                   </div>
-                ) : null}
-                <button type="button" className="secondary-button full-width-button" onClick={() => onInvestigateInbox(item)}>
-                  Investigate
-                </button>
+                  <p>{item.summary}</p>
+                  {item.sample_ids.length ? (
+                    <div className="sample-chip-row">
+                      {item.sample_ids.map((sampleId) => (
+                        <span key={sampleId} className="sample-chip">
+                          {sampleId}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="inbox-row-side">
+                  <strong>{item.count}</strong>
+                  <span>cases</span>
+                  <button type="button" className="secondary-button" onClick={() => onInvestigateInbox(item)}>
+                    Open
+                  </button>
+                </div>
               </article>
             ))}
           </div>

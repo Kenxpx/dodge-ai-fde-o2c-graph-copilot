@@ -287,11 +287,11 @@ function App() {
     <div className="app-shell">
       <header className="hero-bar">
         <div>
-          <p className="eyebrow">SAP Order-to-Cash</p>
+          <p className="eyebrow">SAP Order-to-Cash Intelligence</p>
           <h1>{meta?.title ?? 'Loading intelligence copilot...'}</h1>
           <p className="hero-copy">
-            Trace invoices, investigate broken flows, surface the next operational issue, and answer ERP questions with
-            grounded SQL and graph-linked context.
+            A minimal operator workspace for tracing invoices, investigating broken flows, and answering ERP questions
+            with grounded SQL and a shared business graph.
           </p>
         </div>
 
@@ -320,7 +320,7 @@ function App() {
         <span className={`status-pill ${meta?.llm_status.ready ? 'ready' : 'idle'}`}>
           {meta?.llm_status.provider === 'gemini' ? 'Gemini ready' : 'LLM fallback disabled'}
         </span>
-        <span className="status-pill neutral">Ops inbox + guided follow-ups</span>
+        <span className="status-pill neutral">Operations inbox and guided flows</span>
       </div>
 
       {error ? <div className="error-banner">{error}</div> : null}
