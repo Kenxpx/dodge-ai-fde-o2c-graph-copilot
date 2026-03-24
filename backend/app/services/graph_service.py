@@ -251,7 +251,9 @@ class GraphService:
             "customer_id": "customer",
             "product_id": "product",
             "plant": "plant",
+            "delivery_plant_id": "plant",
             "delivery_plant_name": "plant",
+            "production_plant_id": "plant",
             "production_plant_name": "plant",
             "delivery_plant": "plant",
             "production_plant": "plant",
@@ -261,6 +263,12 @@ class GraphService:
                 if value in (None, ""):
                     continue
                 node_type = type_map.get(column)
+                if node_type is None and (
+                    column.endswith("_plant")
+                    or column.endswith("_plant_id")
+                    or column.endswith("_plant_name")
+                ):
+                    node_type = "plant"
                 if node_type:
                     focus.append(f"{node_type}:{value}")
         deduped: dict[str, None] = {}
