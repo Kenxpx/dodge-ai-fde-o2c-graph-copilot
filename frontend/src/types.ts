@@ -46,6 +46,8 @@ export type ChatTurn = {
 
 export type ChatResponse = {
   answer: string
+  answer_title?: string | null
+  highlights: string[]
   strategy: string
   warnings: string[]
   citations: string[]
@@ -71,6 +73,8 @@ export type MetaResponse = {
 export type Message = {
   role: 'user' | 'assistant'
   content: string
+  answer_title?: string | null
+  highlights?: string[]
   strategy?: string
   warnings?: string[]
   citations?: string[]

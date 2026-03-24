@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "Dodge AI O2C Graph Copilot"
+    app_name: str = "Order-to-Cash Intelligence Copilot"
     app_env: str = "development"
     base_dir: Path = Field(default_factory=lambda: Path(__file__).resolve().parents[2])
     dataset_root: Path | None = None
@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     openai_base_url: str = "https://openrouter.ai/api/v1"
     openai_model: str = "openai/gpt-4.1-mini"
     max_query_rows: int = 200
-    initial_flow_limit: int = 6
+    initial_flow_limit: int = 4
     graph_neighbor_limit: int = 140
 
     model_config = SettingsConfigDict(

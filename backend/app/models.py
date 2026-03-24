@@ -69,6 +69,8 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     answer: str
+    answer_title: str | None = None
+    highlights: list[str] = Field(default_factory=list)
     strategy: str
     warnings: list[str] = Field(default_factory=list)
     citations: list[str] = Field(default_factory=list)

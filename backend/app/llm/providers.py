@@ -22,6 +22,22 @@ class BaseLLMProvider:
     async def complete_text(self, system_prompt: str, user_prompt: str) -> LLMResult:
         raise NotImplementedError
 
+    @staticmethod
+    def _parse_json_text(text: str) -> dict[str, Any]:
+        cleaned = text.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.strip("`")
+            cleaned = cleaned.removeprefix("json").strip()
+
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError:
+            start = cleaned.find("{")
+            end = cleaned.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                return json.loads(cleaned[start : end + 1])
+            raise
+
 
 class GeminiProvider(BaseLLMProvider):
     async def _request(self, *, system_prompt: str, user_prompt: str, json_mode: bool) -> LLMResult:
@@ -51,7 +67,7 @@ class GeminiProvider(BaseLLMProvider):
 
     async def complete_json(self, system_prompt: str, user_prompt: str) -> dict[str, Any]:
         result = await self._request(system_prompt=system_prompt, user_prompt=user_prompt, json_mode=True)
-        return json.loads(result.text)
+        return self._parse_json_text(result.text)
 
     async def complete_text(self, system_prompt: str, user_prompt: str) -> LLMResult:
         return await self._request(system_prompt=system_prompt, user_prompt=user_prompt, json_mode=False)
@@ -93,7 +109,7 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             system_prompt=system_prompt,
             user_prompt=f"{user_prompt}\n\nReturn valid JSON only. Do not use markdown fences.",
         )
-        return json.loads(result.text)
+        return self._parse_json_text(result.text)
 
     async def complete_text(self, system_prompt: str, user_prompt: str) -> LLMResult:
         return await self._request(system_prompt=system_prompt, user_prompt=user_prompt)

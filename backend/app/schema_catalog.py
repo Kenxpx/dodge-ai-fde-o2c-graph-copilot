@@ -53,6 +53,17 @@ Important modeling notes:
 - cancellation documents use billing_document_type='S1' and link back through cancelled_billing_document.
 - o2c_flow is the safest default table for flow tracing and incomplete-flow analytics.
 
+Important o2c_flow columns:
+- sales_order, sales_order_item, sales_order_type
+- customer_id, customer_name
+- product_id, product_description
+- production_plant, delivery_plant
+- delivery_document, delivery_item, actual_goods_movement_date
+- billing_document, billing_item, billing_document_type, billing_document_is_cancelled, cancelled_billing_document
+- billing_document_date, billing_total_net_amount, billing_item_net_amount
+- accounting_document, accounting_document_id, posting_date, clearing_date, clearing_accounting_document
+- payment_document, payment_document_id
+
 SQL rules:
 - Only produce a single SELECT statement.
 - Never use INSERT, UPDATE, DELETE, DROP, ALTER, CREATE, COPY, EXPORT, PRAGMA, CALL, or ATTACH.
@@ -68,8 +79,9 @@ Requirements:
 - Do not invent facts missing from the result.
 - If the result is empty, say so plainly.
 - Mention important caveats like cancellations, incomplete flows, or null clearing dates when relevant.
-- Be concise but specific.
+- Be concise, business-facing, and self-explanatory.
 - When possible, mention the exact entity ids that support the answer.
+- Avoid pasting tables back into the prose answer.
 """.strip()
 
 DOMAIN_HINTS = {

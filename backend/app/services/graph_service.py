@@ -94,7 +94,7 @@ class GraphService:
                     f"customer:{customer_id}" if customer_id else None,
                 ]
             )
-        return self.subgraph([node_id for node_id in seed_nodes if node_id], depth=1, limit=90)
+        return self.subgraph([node_id for node_id in seed_nodes if node_id], depth=1, limit=72)
 
     def search(self, query: str, limit: int = 10) -> list[SearchResult]:
         normalized = f"%{query.lower()}%"
@@ -243,7 +243,9 @@ class GraphService:
             "sales_order": "sales_order",
             "delivery_document": "delivery",
             "billing_document": "billing_document",
+            "accounting_document": "accounting_document",
             "accounting_document_id": "accounting_document",
+            "payment_document": "payment_document",
             "payment_document_id": "payment_document",
             "customer_id": "customer",
             "product_id": "product",
@@ -260,4 +262,4 @@ class GraphService:
         deduped: dict[str, None] = {}
         for node_id in focus:
             deduped.setdefault(node_id, None)
-        return list(deduped.keys())
+        return list(deduped.keys())[:8]

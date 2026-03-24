@@ -68,9 +68,14 @@ function App() {
     setSelectedNode(detail)
   }
 
+  const clearSelection = () => {
+    setSelectedNodeId(null)
+    setSelectedNode(null)
+  }
+
   const handlePickResult = async (nodeId: string) => {
     try {
-      const nextGraph = await api.getSubgraph([nodeId], 1, 110)
+      const nextGraph = await api.getSubgraph([nodeId], 1, 90)
       startTransition(() => setGraph(nextGraph))
       await loadNode(nodeId)
     } catch (reason) {
@@ -83,7 +88,7 @@ function App() {
       return
     }
     try {
-      const nextGraph = await api.expandGraph(selectedNodeId, 1, 140)
+      const nextGraph = await api.expandGraph(selectedNodeId, 1, 120)
       startTransition(() => setGraph(nextGraph))
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Failed to expand graph.')
@@ -113,6 +118,8 @@ function App() {
       const assistantMessage: Message = {
         role: 'assistant',
         content: response.answer,
+        answer_title: response.answer_title,
+        highlights: response.highlights,
         strategy: response.strategy,
         warnings: response.warnings,
         citations: response.citations,
@@ -133,16 +140,19 @@ function App() {
   }
 
   const stats = meta?.dataset_stats.totals
+  const selectedContextLabel = selectedNode
+    ? `${selectedNode.label}${selectedNode.subtitle ? ` • ${selectedNode.subtitle}` : ''}`
+    : null
 
   return (
     <div className="app-shell">
       <header className="hero-bar">
         <div>
-          <p className="eyebrow">Dodge AI Take-Home</p>
-          <h1>{meta?.title ?? 'Loading graph copilot...'}</h1>
+          <p className="eyebrow">SAP Order-to-Cash</p>
+          <h1>{meta?.title ?? 'Loading intelligence copilot...'}</h1>
           <p className="hero-copy">
-            A grounded ERP copilot over the SAP order-to-cash dataset with graph exploration, SQL-backed answers,
-            cancellation awareness, and flow tracing across orders, deliveries, billing, A/R, and payment clearance.
+            Trace invoices, investigate broken flows, and answer ERP questions with grounded SQL and graph-linked
+            business context.
           </p>
         </div>
 
@@ -160,18 +170,18 @@ function App() {
             <strong>{stats?.billing_documents ?? '...'}</strong>
           </div>
           <div className="stat-card">
-            <span>Graph Nodes</span>
-            <strong>{stats?.graph_nodes ?? '...'}</strong>
+            <span>A/R Docs</span>
+            <strong>{stats?.accounting_documents ?? '...'}</strong>
           </div>
         </div>
       </header>
 
       <div className="status-row">
+        <span className="status-pill neutral">Grounded in DuckDB SQL</span>
         <span className={`status-pill ${meta?.llm_status.ready ? 'ready' : 'idle'}`}>
-          LLM: {meta?.llm_status.provider ?? '...'} {meta?.llm_status.ready ? 'configured' : 'not configured'}
+          {meta?.llm_status.provider === 'gemini' ? 'Gemini ready' : 'LLM fallback disabled'}
         </span>
-        <span className="status-pill neutral">Model: {meta?.llm_status.model ?? '...'}</span>
-        <span className="status-pill neutral">Grounding: DuckDB + semantic O2C view</span>
+        <span className="status-pill neutral">Graph and SQL share one semantic model</span>
       </div>
 
       {error ? <div className="error-banner">{error}</div> : null}
@@ -182,6 +192,9 @@ function App() {
           exampleQueries={meta?.example_queries ?? []}
           draft={draft}
           isSubmitting={isSubmitting}
+          llmReady={Boolean(meta?.llm_status.ready)}
+          selectedContextLabel={selectedContextLabel}
+          onClearContext={clearSelection}
           onDraftChange={setDraft}
           onSubmit={() => void handleSubmit()}
           onExampleClick={(query) => setDraft(query)}
@@ -189,7 +202,7 @@ function App() {
 
         <section className="panel panel-graph">
           {isBootstrapping ? (
-            <div className="loading-state">Building dataset views and graph...</div>
+            <div className="loading-state">Building semantic views and graph context...</div>
           ) : (
             <GraphCanvas
               graph={graph}
@@ -213,6 +226,7 @@ function App() {
           onExpandSelected={() => {
             void handleExpandSelected()
           }}
+          onClearSelected={clearSelection}
         />
       </main>
     </div>
