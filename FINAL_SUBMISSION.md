@@ -8,6 +8,8 @@ https://github.com/Kenxpx/dodge-ai-fde-o2c-graph-copilot
 
 https://dodge-ai-o2c-graph-copilot.onrender.com
 
+Gemini-backed dynamic SQL planning is enabled in the deployed demo.
+
 ## Uploadable AI Session Logs
 
 - `ai-coding-sessions.zip`
@@ -48,4 +50,4 @@ Render is now live for this submission using:
 
 ## Anything else you'd want us to know?
 
-The implementation uses a shared semantic layer for both the graph UI and grounded SQL answers, with deterministic query paths for the highest-signal evaluator workflows and an optional LLM fallback for open-ended in-domain questions. I intentionally optimized for groundedness, cancellation handling, item-level lineage, and evaluator reliability rather than broad but shallow ERP coverage.
+The implementation uses a shared semantic layer for both the graph UI and grounded SQL answers, with deterministic query paths for the highest-signal evaluator workflows and Gemini-backed fallback for broader in-domain questions. I intentionally optimized for groundedness, cancellation handling, item-level lineage, clear operator-facing answers, and evaluator reliability rather than broad but shallow ERP coverage.

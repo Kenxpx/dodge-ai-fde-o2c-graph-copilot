@@ -9,6 +9,7 @@ This repository is ready for the Dodge AI FDE submission flow, with a few final 
 - AI workflow summaries in `sessions/` and `docs/AI_SESSION_LOG.md`
 - Dockerized single-service deployment path through `Dockerfile`
 - Optional `render.yaml` for a simple Render deployment
+- Live Render deployment with Gemini enabled
 
 ## Files to point reviewers to
 
