@@ -4,6 +4,10 @@
 
 https://github.com/Kenxpx/dodge-ai-fde-o2c-graph-copilot
 
+## Live Demo
+
+https://dodge-ai-o2c-graph-copilot.onrender.com
+
 ## Uploadable AI Session Logs
 
 - `ai-coding-sessions.zip`
@@ -25,27 +29,20 @@ https://github.com/Kenxpx/dodge-ai-fde-o2c-graph-copilot
 
 - GitHub repo: complete
 - Local verification: complete
-- Live hosting: pending hosting-account authentication
+- Live hosting: complete
 
-## Best deployment target
+## Hosting target
 
-Use Render for the live demo. This repository is already set up for it with:
+Render is now live for this submission using:
 
 - `Dockerfile`
 - `render.yaml`
-
-## Exact final step
-
-1. Open Render and create a new Web Service from the GitHub repo.
-2. Select `Kenxpx/dodge-ai-fde-o2c-graph-copilot`.
-3. Keep the Docker deployment path.
-4. Deploy and copy the generated HTTPS URL into the Google Form.
 
 ## Suggested Google Form values
 
 - Name: your full name
 - Email: `sachinbinduc@gmail.com`
-- Live Demo / Deployed Application: Render URL after deployment
+- Live Demo / Deployed Application: `https://dodge-ai-o2c-graph-copilot.onrender.com`
 - Public GitHub Repository: `https://github.com/Kenxpx/dodge-ai-fde-o2c-graph-copilot`
 - AI Coding Sessions / Prompt Logs: upload `ai-coding-sessions.zip`
 

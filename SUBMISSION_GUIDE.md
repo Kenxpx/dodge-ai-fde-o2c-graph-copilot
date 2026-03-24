@@ -56,7 +56,7 @@ The application serves both the API and frontend from the same service on port `
 
 - Name: your full name
 - Email: `sachinbinduc@gmail.com`
-- Live Demo / Deployed Application: paste the deployed HTTPS URL
+- Live Demo / Deployed Application: `https://dodge-ai-o2c-graph-copilot.onrender.com`
 - Public GitHub Repository: paste the public repo URL
 - AI Coding Sessions / Prompt Logs: upload `ai-coding-sessions.zip`
 
