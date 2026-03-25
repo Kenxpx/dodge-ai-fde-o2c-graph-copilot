@@ -430,7 +430,7 @@ function App() {
       <div className="status-row">
         <span className="status-pill neutral">Grounded in DuckDB SQL</span>
         <span className={`status-pill ${meta?.llm_status.ready ? 'ready' : 'idle'}`}>
-          {meta?.llm_status.provider === 'gemini' ? 'Gemini ready' : 'LLM fallback disabled'}
+          {meta?.llm_status.provider === 'gemini' ? 'Gemini fallback configured' : 'LLM fallback disabled'}
         </span>
         <span className="status-pill neutral">Operations inbox and guided flows</span>
         <button type="button" className="workspace-action" onClick={() => void handleResetWorkspace()}>
