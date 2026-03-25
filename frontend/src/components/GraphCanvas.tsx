@@ -20,7 +20,8 @@ type HoverCard = {
   y: number
 }
 
-const GRAPH_WHEEL_SENSITIVITY = 0.4
+// Keep scroll-wheel zoom responsive enough for dense graph investigation.
+const GRAPH_WHEEL_SENSITIVITY = 0.6
 
 const graphStylesheet: any[] = [
   {
