@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { HelpMessage, NodeDetail, SearchResult } from '../types'
 
@@ -17,6 +17,19 @@ type InspectorPanelProps = {
   onHelpDraftChange: (value: string) => void
   onHelpSubmit: () => void
   onHelpExampleClick: (value: string) => void
+  onQuickAction: (value: string) => void
+}
+
+type QuickAction = {
+  label: string
+  prompt: string
+  note: string
+}
+
+type Runbook = {
+  title: string
+  summary: string
+  steps: string[]
 }
 
 const HELP_EXAMPLES = [
@@ -30,6 +43,281 @@ function formatLabel(value: string) {
   return value
     .replaceAll('_', ' ')
     .replace(/\b\w/g, (match) => match.toUpperCase())
+}
+
+function readMetadataValue(metadata: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = metadata[key]
+    if (value !== null && value !== undefined && value !== '') {
+      return String(value)
+    }
+  }
+  return null
+}
+
+function buildQuickActions(node: NodeDetail | null): QuickAction[] {
+  if (!node) {
+    return []
+  }
+
+  const metadata = node.metadata
+  const customerId = readMetadataValue(metadata, 'customer_id')
+  const billingDocument = readMetadataValue(metadata, 'billing_document') ?? node.label
+  const salesOrder = readMetadataValue(metadata, 'sales_order') ?? node.label
+  const accountingDocument = readMetadataValue(metadata, 'accounting_document') ?? node.label
+  const productId = readMetadataValue(metadata, 'product_id') ?? node.label
+  const deliveryDocument = readMetadataValue(metadata, 'delivery_document') ?? node.label
+  const plantId =
+    readMetadataValue(metadata, 'delivery_plant_id', 'delivery_plant_name', 'delivery_plant', 'plant', 'plant_id') ??
+    node.label
+
+  if (node.node_type === 'billing_document') {
+    return [
+      {
+        label: 'Trace flow',
+        prompt: `Trace the full flow of billing document ${billingDocument}.`,
+        note: 'Follow the order, delivery, billing, and A/R lineage end to end.',
+      },
+      {
+        label: 'Check reversal',
+        prompt: `Was billing document ${billingDocument} cancelled later?`,
+        note: 'Verify whether this invoice was reversed through a cancellation document.',
+      },
+      ...(customerId
+        ? [
+            {
+              label: 'Customer billing',
+              prompt: `Show all billing documents for customer ${customerId}.`,
+              note: 'Pivot from this invoice to the broader customer context.',
+            },
+          ]
+        : []),
+    ]
+  }
+
+  if (node.node_type === 'sales_order') {
+    return [
+      {
+        label: 'Trace order',
+        prompt: `Trace sales order ${salesOrder} end to end.`,
+        note: 'Check whether the order completed delivery, billing, and clearing.',
+      },
+      {
+        label: 'Check breaks',
+        prompt: 'Identify sales orders that have broken or incomplete flows.',
+        note: 'Compare this order against the broader exception queue.',
+      },
+      ...(customerId
+        ? [
+            {
+              label: 'Customer billing',
+              prompt: `Show all billing documents for customer ${customerId}.`,
+              note: 'See whether this order is part of a wider customer pattern.',
+            },
+          ]
+        : []),
+    ]
+  }
+
+  if (node.node_type === 'customer') {
+    return [
+      {
+        label: 'Billing activity',
+        prompt: `Show all billing documents for customer ${node.label}.`,
+        note: 'Review the full invoice activity for this customer.',
+      },
+      {
+        label: 'Open A/R',
+        prompt: `Show all open accounting documents for customer ${node.label}.`,
+        note: 'Check whether this customer has unresolved receivables.',
+      },
+      {
+        label: 'Check cancellations',
+        prompt: `Which billing documents were cancelled for customer ${node.label}?`,
+        note: 'Look for reversed invoices and process-quality signals.',
+      },
+    ]
+  }
+
+  if (node.node_type === 'accounting_document') {
+    return [
+      {
+        label: 'Find source invoice',
+        prompt: `Which billing document created accounting document ${accountingDocument}?`,
+        note: 'Reconnect the accounting posting to the commercial document flow.',
+      },
+      {
+        label: 'Open A/R queue',
+        prompt: 'Show me open accounting documents that have not been cleared by a payment.',
+        note: 'Compare this posting against the wider open-item backlog.',
+      },
+      ...(customerId
+        ? [
+            {
+              label: 'Customer open items',
+              prompt: `Show all open accounting documents for customer ${customerId}.`,
+              note: 'Check whether this is isolated or part of a broader customer issue.',
+            },
+          ]
+        : []),
+    ]
+  }
+
+  if (node.node_type === 'product') {
+    return [
+      {
+        label: 'Customer demand',
+        prompt: `Which customers bought product ${productId}?`,
+        note: 'Identify the commercial footprint of this product.',
+      },
+      {
+        label: 'Delivery path',
+        prompt: `Which deliveries carried product ${productId}?`,
+        note: 'Trace where the product shows up in shipment and billing flows.',
+      },
+      {
+        label: 'Cancellation risk',
+        prompt: `Are there any cancelled billing documents involving product ${productId}?`,
+        note: 'Check whether this product is overrepresented in reversed invoices.',
+      },
+    ]
+  }
+
+  if (node.node_type === 'delivery') {
+    return [
+      {
+        label: 'Trace delivery',
+        prompt: `Trace delivery document ${deliveryDocument} through billing and accounting.`,
+        note: 'Follow what happened after fulfillment.',
+      },
+      {
+        label: 'Check breaks',
+        prompt: 'Identify sales orders that have broken or incomplete flows.',
+        note: 'See whether this delivery belongs to a broader execution issue.',
+      },
+      {
+        label: 'Plant context',
+        prompt: `Which products are billed from delivery document ${deliveryDocument}?`,
+        note: 'Inspect which products moved through this shipment.',
+      },
+    ]
+  }
+
+  if (node.node_type === 'plant') {
+    return [
+      {
+        label: 'Product spread',
+        prompt: `Which products are billed from delivery plant ${plantId}?`,
+        note: 'Understand the billed product mix associated with this plant.',
+      },
+      {
+        label: 'Plant ranking',
+        prompt: 'Which delivery plants are associated with the widest range of billed products?',
+        note: 'Compare this plant against the full network.',
+      },
+      {
+        label: 'Exception scan',
+        prompt: 'Identify sales orders that have broken or incomplete flows.',
+        note: 'Check whether fulfillment breaks cluster around specific plants.',
+      },
+    ]
+  }
+
+  return [
+    {
+      label: 'Expand context',
+      prompt: 'Identify sales orders that have broken or incomplete flows.',
+      note: 'Use a broader operational query to gather more context before drilling deeper.',
+    },
+  ]
+}
+
+function buildRunbook(node: NodeDetail | null): Runbook | null {
+  if (!node) {
+    return null
+  }
+
+  if (node.node_type === 'billing_document') {
+    return {
+      title: 'Invoice investigation runbook',
+      summary: 'Best path when starting from a billing document.',
+      steps: [
+        'Confirm whether the document is an original invoice or a cancellation record.',
+        'Validate the linked A/R posting and whether the receivable was cleared by payment.',
+        'Inspect the billing items and delivery chain to verify what was actually fulfilled.',
+      ],
+    }
+  }
+
+  if (node.node_type === 'sales_order') {
+    return {
+      title: 'Order investigation runbook',
+      summary: 'Use this when starting from a sales order or exception case.',
+      steps: [
+        'Check whether the order has reached delivery at the item level.',
+        'Separate delivered-not-billed leakage from billed-not-cleared finance issues.',
+        'Compare the order against the incomplete-flow queue to gauge whether it is isolated or systemic.',
+      ],
+    }
+  }
+
+  if (node.node_type === 'customer') {
+    return {
+      title: 'Customer review runbook',
+      summary: 'Useful when a customer appears repeatedly in billing, cancellations, or open A/R.',
+      steps: [
+        'Review the customer billing footprint before drilling into single documents.',
+        'Check whether cancellations or open receivables cluster around this customer.',
+        'Use one representative billing trace to inspect the underlying operational chain.',
+      ],
+    }
+  }
+
+  if (node.node_type === 'accounting_document') {
+    return {
+      title: 'A/R investigation runbook',
+      summary: 'Start here when you are triaging open accounting items.',
+      steps: [
+        'Reconnect the posting to the originating billing document.',
+        'Check whether the open item reflects a true unpaid invoice or a later reversal.',
+        'Review neighboring customer and billing entities to understand the business impact.',
+      ],
+    }
+  }
+
+  if (node.node_type === 'product') {
+    return {
+      title: 'Product pattern runbook',
+      summary: 'Useful when you want to know whether a product is tied to volume or quality issues.',
+      steps: [
+        'Identify which customers and deliveries contribute most to this product activity.',
+        'Check whether the product appears frequently in cancelled or problematic billing flows.',
+        'Use the graph to compare whether the signal is concentrated or broad.',
+      ],
+    }
+  }
+
+  if (node.node_type === 'delivery' || node.node_type === 'plant') {
+    return {
+      title: 'Fulfillment runbook',
+      summary: 'A good path when starting from the shipping side of the flow.',
+      steps: [
+        'Trace what was fulfilled and whether it was billed correctly afterward.',
+        'Check whether the issue is local to this entity or part of a wider execution pattern.',
+        'Use nearby products and invoices to understand business impact quickly.',
+      ],
+    }
+  }
+
+  return {
+    title: 'Investigation runbook',
+    summary: 'A lightweight path for turning this entity into a grounded business investigation.',
+    steps: [
+      'Start with the closest document or business object linked to this entity.',
+      'Run one focused ERP question before expanding into broader pattern analysis.',
+      'Use graph neighbors plus evidence rows together before drawing a conclusion.',
+    ],
+  }
 }
 
 export function InspectorPanel({
@@ -47,12 +335,21 @@ export function InspectorPanel({
   onHelpDraftChange,
   onHelpSubmit,
   onHelpExampleClick,
+  onQuickAction,
 }: InspectorPanelProps) {
   const [activeTab, setActiveTab] = useState<'guide' | 'explorer'>('guide')
+
+  useEffect(() => {
+    if (selectedNodeId || search.trim().length >= 2) {
+      setActiveTab('explorer')
+    }
+  }, [selectedNodeId, search])
 
   const metadataEntries = selectedNode
     ? Object.entries(selectedNode.metadata).filter(([, value]) => value !== null && value !== '')
     : []
+  const quickActions = buildQuickActions(selectedNode)
+  const runbook = buildRunbook(selectedNode)
 
   return (
     <section className="panel panel-inspector">
@@ -217,6 +514,43 @@ export function InspectorPanel({
                   <span className="pill">{selectedNode.node_id}</span>
                 </div>
 
+                {quickActions.length ? (
+                  <div className="quick-action-section">
+                    <p className="section-label">Suggested investigations</p>
+                    <div className="quick-action-grid">
+                      {quickActions.map((action) => (
+                        <button
+                          key={`${selectedNode.node_id}-${action.label}`}
+                          type="button"
+                          className="quick-action-card"
+                          onClick={() => onQuickAction(action.prompt)}
+                        >
+                          <strong>{action.label}</strong>
+                          <span>{action.note}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {runbook ? (
+                  <div className="runbook-card">
+                    <div className="runbook-header">
+                      <div>
+                        <p className="section-label">Runbook</p>
+                        <h4>{runbook.title}</h4>
+                      </div>
+                      <span className="pill">Operator workflow</span>
+                    </div>
+                    <p>{runbook.summary}</p>
+                    <ol className="runbook-list">
+                      {runbook.steps.map((step) => (
+                        <li key={step}>{step}</li>
+                      ))}
+                    </ol>
+                  </div>
+                ) : null}
+
                 <div className="section-label">Key facts</div>
                 <div className="metadata-grid">
                   {metadataEntries.map(([key, value]) => (
@@ -238,7 +572,11 @@ export function InspectorPanel({
                   ))}
                 </div>
               </>
-            ) : null}
+            ) : (
+              <p className="search-helper">
+                Select an entity to unlock suggested investigations and a lightweight runbook for the next best analysis step.
+              </p>
+            )}
           </div>
         </>
       )}

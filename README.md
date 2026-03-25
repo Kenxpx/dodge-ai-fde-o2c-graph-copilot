@@ -15,6 +15,39 @@ The project combines:
 - API index: `https://dodge-ai-o2c-graph-copilot.onrender.com/api`
 - API docs: `https://dodge-ai-o2c-graph-copilot.onrender.com/api/docs`
 
+## Review this submission in 3 minutes
+
+If you only have a few minutes, use this order:
+
+1. Open the live workspace and use the seeded billing trace:
+   `https://dodge-ai-o2c-graph-copilot.onrender.com/?demo=trace`
+2. Open the open A/R investigation path:
+   `https://dodge-ai-o2c-graph-copilot.onrender.com/?demo=open_ar`
+3. Open the project-guide view for architecture context:
+   `https://dodge-ai-o2c-graph-copilot.onrender.com/?demo=guide`
+4. Check the public API surface:
+   `https://dodge-ai-o2c-graph-copilot.onrender.com/api/docs`
+
+Suggested reviewer questions:
+- Trace the full flow of billing document `90504298`
+- Which delivery plants are associated with the widest range of billed products?
+- Show me open accounting documents that have not been cleared by a payment.
+- How does Gemini stay grounded and safe in this project?
+
+## Screenshots
+
+### Workspace overview
+
+![O2C Workspace overview](docs/screenshots/o2c-overview.png)
+
+### Billing trace workflow
+
+![Billing trace workflow](docs/screenshots/o2c-trace.png)
+
+### Project guide and reviewer help
+
+![Project guide view](docs/screenshots/o2c-guide.png)
+
 ## What the project does
 
 This workspace is designed around the core order-to-cash investigation loop:
@@ -34,14 +67,18 @@ Core workflows supported well:
 
 ## Architecture at a glance
 
-```text
-SAP JSONL exports
-  -> ingestion pipeline
-  -> raw DuckDB tables
-  -> semantic SQL views
-  -> graph_nodes / graph_edges
-  -> FastAPI services and APIs
-  -> React workspace
+```mermaid
+flowchart LR
+    A["SAP JSONL exports"] --> B["Ingestion pipeline"]
+    B --> C["Raw DuckDB tables"]
+    C --> D["Semantic SQL views"]
+    D --> E["graph_nodes / graph_edges"]
+    D --> F["Query service"]
+    E --> G["Graph service"]
+    F --> H["FastAPI API surface"]
+    G --> H
+    H --> I["React workspace"]
+    H --> J["Public API docs"]
 ```
 
 Main design choices:
@@ -149,8 +186,30 @@ Checked locally:
 - frontend production build
 - backend smoke tests via `pytest`
 
+Checked on the live deployment:
+- root page availability
+- API health
+- metadata and model readiness
+- deterministic ERP trace
+- Gemini-backed ERP question
+- project-help route
+- graph search, node detail, expand, and subgraph endpoints
+
 ## Notes for evaluation
 
 - The hardest part of this assignment is the data modeling, not the graph widget.
 - The project is intentionally optimized for groundedness, readability, and evaluator reliability.
 - Deterministic coverage exists for the most important demo paths so the app stays strong even when the LLM path is unavailable.
+
+## Known limitations and next steps
+
+Intentional limitations in the current build:
+- the deterministic layer is deepest on the highest-signal evaluator workflows rather than every possible ERP question
+- the graph intentionally stays focused and answer-linked instead of rendering the full ERP universe at once
+- the project is optimized for a bundled demo dataset rather than multi-tenant production infrastructure
+
+Natural next extensions:
+- saved investigations with shareable deep links
+- richer timeline views for selected entities
+- more deterministic templates for customer- and plant-level workflows
+- stronger instrumentation for query latency and reasoning path visibility

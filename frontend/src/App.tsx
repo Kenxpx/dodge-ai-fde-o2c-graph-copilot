@@ -1,4 +1,4 @@
-import { startTransition, useDeferredValue, useEffect, useState } from 'react'
+import { startTransition, useDeferredValue, useEffect, useRef, useState } from 'react'
 
 import { api } from './api'
 import './App.css'
@@ -25,6 +25,25 @@ const INITIAL_HELP_MESSAGE: HelpMessage = {
   citations: ['README.md', 'docs/ARCHITECTURE.md'],
 }
 
+const DEMO_SCENARIOS: Record<string, { kind: 'erp' | 'help'; question: string }> = {
+  trace: {
+    kind: 'erp',
+    question: 'Trace the full flow of billing document 90504298.',
+  },
+  open_ar: {
+    kind: 'erp',
+    question: 'Show me open accounting documents that have not been cleared by a payment.',
+  },
+  cancellations: {
+    kind: 'erp',
+    question: 'Which billing documents are cancelled and what are their cancellation documents?',
+  },
+  guide: {
+    kind: 'help',
+    question: 'How is this project structured end to end?',
+  },
+}
+
 function App() {
   const [meta, setMeta] = useState<MetaResponse | null>(null)
   const emptyGraph: GraphPayload = {
@@ -47,6 +66,7 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isHelpSubmitting, setIsHelpSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const demoHandledRef = useRef(false)
 
   useEffect(() => {
     const bootstrap = async () => {
@@ -342,6 +362,30 @@ function App() {
     await navigator.clipboard.writeText(message.sql)
   }
 
+  useEffect(() => {
+    if (isBootstrapping || demoHandledRef.current) {
+      return
+    }
+
+    const demoKey = new URLSearchParams(window.location.search).get('demo')
+    if (!demoKey) {
+      return
+    }
+
+    const scenario = DEMO_SCENARIOS[demoKey]
+    if (!scenario) {
+      return
+    }
+
+    demoHandledRef.current = true
+    if (scenario.kind === 'erp') {
+      void runQuestion(scenario.question)
+      return
+    }
+
+    void runHelpQuestion(scenario.question)
+  }, [isBootstrapping])
+
   const stats = meta?.dataset_stats.totals
   const selectedContextLabel = selectedNode
     ? `${selectedNode.label}${selectedNode.subtitle ? ` | ${selectedNode.subtitle}` : ''}`
@@ -462,6 +506,9 @@ function App() {
           }}
           onHelpExampleClick={(question) => {
             void runHelpQuestion(question)
+          }}
+          onQuickAction={(question) => {
+            void runQuestion(question, selectedNodeId ? [selectedNodeId] : [])
           }}
         />
       </main>
