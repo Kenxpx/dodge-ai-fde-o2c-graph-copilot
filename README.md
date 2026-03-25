@@ -93,6 +93,8 @@ Main design choices:
   Public API guide and examples.
 - `docs/AI_SESSION_LOG.md`
   AI-assisted implementation notes.
+- `AI_TOOLING_WORKFLOW_SUMMARY.md`
+  Upload-ready AI workflow summary for the submission form.
 
 ## Quick start
 

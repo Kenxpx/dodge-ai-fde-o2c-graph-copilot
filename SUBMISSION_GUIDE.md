@@ -6,7 +6,7 @@ This repository is ready for the Dodge AI FDE submission flow, with a few final 
 
 - Public-repo-friendly code layout with `backend/`, `frontend/`, root `src/`, and `sessions/`
 - Architecture and guardrail write-up in `README.md`
-- AI workflow summaries in `sessions/` and `docs/AI_SESSION_LOG.md`
+- AI workflow summaries in `sessions/`, `docs/AI_SESSION_LOG.md`, and `AI_TOOLING_WORKFLOW_SUMMARY.md`
 - Dockerized single-service deployment path through `Dockerfile`
 - Optional `render.yaml` for a simple Render deployment
 - Live Render deployment with Gemini enabled
@@ -22,7 +22,7 @@ This repository is ready for the Dodge AI FDE submission flow, with a few final 
 - Backend app entry point: `backend/app/main.py`
 - Semantic ingestion pipeline: `backend/app/services/ingestion.py`
 - Query orchestration and prompting path: `backend/app/services/query_service.py`
-- AI session logs: `sessions/` and `docs/AI_SESSION_LOG.md`
+- AI session logs: `AI_TOOLING_WORKFLOW_SUMMARY.md`, `sessions/`, and `docs/AI_SESSION_LOG.md`
 
 ## Publish the repository
 
@@ -64,7 +64,7 @@ The application serves both the API and frontend from the same service on port `
 - Email: `sachinbinduc@gmail.com`
 - Live Demo / Deployed Application: `https://dodge-ai-o2c-graph-copilot.onrender.com`
 - Public GitHub Repository: paste the public repo URL
-- AI Coding Sessions / Prompt Logs: upload `ai-coding-sessions.zip`
+- AI Coding Sessions / Prompt Logs: upload `ai-coding-sessions.zip` or `AI_TOOLING_WORKFLOW_SUMMARY.md`
 
 ## Suggested "Anything else you'd want us to know?" answer
 

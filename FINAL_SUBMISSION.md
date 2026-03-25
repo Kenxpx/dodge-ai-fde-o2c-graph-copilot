@@ -19,6 +19,7 @@ Standout product touches in the current build:
 ## Uploadable AI Session Logs
 
 - `ai-coding-sessions.zip`
+- `AI_TOOLING_WORKFLOW_SUMMARY.md`
 - `sessions/codex-session-summary.md`
 - `docs/AI_SESSION_LOG.md`
 
