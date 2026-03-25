@@ -20,6 +20,8 @@ type HoverCard = {
   y: number
 }
 
+const GRAPH_WHEEL_SENSITIVITY = 0.4
+
 const graphStylesheet: any[] = [
   {
     selector: 'node',
@@ -268,7 +270,7 @@ export function GraphCanvas({ graph, selectedNodeId, onResetGraph, onSelectNode 
       container: containerRef.current,
       elements: [],
       style: graphStylesheet,
-      wheelSensitivity: 0.16,
+      wheelSensitivity: GRAPH_WHEEL_SENSITIVITY,
       minZoom: 0.28,
       maxZoom: 2.4,
       motionBlur: true,
