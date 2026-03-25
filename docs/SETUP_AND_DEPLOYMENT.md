@@ -45,6 +45,7 @@ The product also includes:
 - recommended action blocks in grounded ERP answers
 - Markdown brief export for investigation handoff
 - a project-help chatbot in the right rail for architecture and submission questions
+- a documented API surface with FastAPI docs at `/api/docs`
 
 ## Local setup
 
@@ -184,9 +185,11 @@ Because the app is already packaged as one service, no additional deployment ste
 ## Verification checklist
 
 After a deploy, I usually check:
+- `/api`
 - `/`
 - `/api/health`
 - `/api/meta`
+- `/api/docs`
 - that `ops_inbox` is present in `/api/meta`
 - one deterministic query
 - one Gemini-backed query

@@ -100,6 +100,20 @@ class MetaResponse(BaseModel):
     ops_inbox: list[InboxItem] = Field(default_factory=list)
 
 
+class APIEndpoint(BaseModel):
+    method: str
+    path: str
+    summary: str
+
+
+class APIIndexResponse(BaseModel):
+    title: str
+    version: str
+    docs_url: str
+    openapi_url: str
+    endpoints: list[APIEndpoint]
+
+
 class HelpChatRequest(BaseModel):
     question: str
     conversation: list[ChatTurn] = Field(default_factory=list)

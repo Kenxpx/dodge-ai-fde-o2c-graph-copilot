@@ -150,7 +150,28 @@ If I were reading this repo cold, I would start here:
 
 - `docs/ARCHITECTURE.md`
 - `docs/SETUP_AND_DEPLOYMENT.md`
+- `docs/API.md`
 - `docs/AI_SESSION_LOG.md`
+
+## API
+
+The backend is also usable as a standalone API, not just through the UI.
+
+- API index: `/api`
+- Interactive docs: `/api/docs`
+- OpenAPI schema: `/api/openapi.json`
+
+Main endpoints:
+- `GET /api/meta`
+- `POST /api/query/chat`
+- `POST /api/help/chat`
+- `GET /api/graph/initial`
+- `GET /api/graph/search`
+- `GET /api/graph/node/{node_id}`
+- `POST /api/graph/expand`
+- `POST /api/graph/subgraph`
+
+Examples and usage notes are in `docs/API.md`.
 
 ## Project structure
 

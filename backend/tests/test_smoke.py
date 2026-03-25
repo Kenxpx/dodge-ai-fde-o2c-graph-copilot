@@ -72,3 +72,23 @@ def test_project_help_answers_project_questions() -> None:
     assert response.answer_title
     assert "Sachin Bindu C" in response.answer
     assert response.citations
+
+
+def test_api_index_and_docs_are_available() -> None:
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    client = TestClient(app)
+    index_response = client.get("/api")
+    docs_response = client.get("/api/docs")
+    openapi_response = client.get("/api/openapi.json")
+
+    assert index_response.status_code == 200
+    payload = index_response.json()
+    assert payload["docs_url"] == "/api/docs"
+    assert any(endpoint["path"] == "/api/query/chat" for endpoint in payload["endpoints"])
+
+    assert docs_response.status_code == 200
+    assert openapi_response.status_code == 200
+    assert "/api/help/chat" in openapi_response.text

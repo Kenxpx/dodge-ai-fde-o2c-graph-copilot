@@ -10,7 +10,12 @@ from app.services.inbox_service import InboxService
 router = APIRouter(prefix="/api/meta", tags=["meta"])
 
 
-@router.get("", response_model=MetaResponse)
+@router.get(
+    "",
+    response_model=MetaResponse,
+    summary="Workspace metadata",
+    description="Fetch high-level dataset stats, model readiness, example questions, and the operator-facing issue inbox.",
+)
 def get_meta() -> MetaResponse:
     settings = get_settings()
     stats = GraphService().get_meta_stats()

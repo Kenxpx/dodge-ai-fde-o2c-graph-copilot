@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 
 from app.api.graph import router as graph_router
 from app.api.help import router as help_router
+from app.api.index import router as api_index_router
 from app.api.meta import router as meta_router
 from app.api.query import router as query_router
 from app.config import get_settings
@@ -33,7 +34,15 @@ async def lifespan(_: FastAPI):
 
 
 settings = get_settings()
-app = FastAPI(title=settings.app_name, lifespan=lifespan)
+app = FastAPI(
+    title=settings.app_name,
+    version="1.0.0",
+    description="Public API for grounded ERP analysis, graph exploration, and project-level help.",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
+    lifespan=lifespan,
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.frontend_origin],
@@ -43,11 +52,12 @@ app.add_middleware(
 )
 
 
-@app.get("/api/health")
+@app.get("/api/health", summary="Health check", description="Confirm that the API service is running.")
 def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+app.include_router(api_index_router)
 app.include_router(meta_router)
 app.include_router(graph_router)
 app.include_router(help_router)
