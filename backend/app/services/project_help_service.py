@@ -37,7 +37,7 @@ HELP_SNIPPETS: tuple[HelpSnippet, ...] = (
         id="overview",
         title="Project overview",
         summary=(
-            "This project is an order-to-cash intelligence copilot built for the Dodge AI Forward Deployed Engineer "
+            "This project is an O2C workspace built for the Dodge AI Forward Deployed Engineer "
             "assignment. It combines grounded SQL, a materialized graph, and a reviewer-friendly UI for tracing invoices, "
             "investigating broken flows, and answering ERP questions."
         ),

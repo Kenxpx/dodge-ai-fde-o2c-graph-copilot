@@ -1,4 +1,4 @@
-# Order-to-Cash Intelligence Copilot
+# O2C Workspace
 
 A production-style analysis workspace for the Dodge AI Forward Deployed Engineer take-home.
 

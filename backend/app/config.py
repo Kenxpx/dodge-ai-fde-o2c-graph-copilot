@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "Order-to-Cash Intelligence Copilot"
+    app_name: str = "O2C Workspace"
     app_env: str = "development"
     base_dir: Path = Field(default_factory=lambda: Path(__file__).resolve().parents[2])
     dataset_root: Path | None = None

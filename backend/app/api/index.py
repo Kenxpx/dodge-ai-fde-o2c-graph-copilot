@@ -9,7 +9,7 @@ router = APIRouter(prefix="/api", tags=["api"])
 @router.get("", response_model=APIIndexResponse, summary="API index")
 def api_index() -> APIIndexResponse:
     return APIIndexResponse(
-        title="Order-to-Cash Intelligence Copilot API",
+        title="O2C Workspace API",
         version="1.0.0",
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
