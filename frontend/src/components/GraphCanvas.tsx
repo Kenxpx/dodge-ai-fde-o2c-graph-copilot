@@ -1,5 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
-import cytoscape, { type Core } from 'cytoscape'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import cytoscape, {
+  type Core,
+  type EventObject,
+  type EventObjectNode,
+  type NodeSingular,
+  type StylesheetJson,
+} from 'cytoscape'
 
 import type { GraphPayload } from '../types'
 
@@ -23,7 +29,7 @@ type HoverCard = {
 // Keep scroll-wheel zoom responsive enough for dense graph investigation.
 const GRAPH_WHEEL_SENSITIVITY = 0.6
 
-const graphStylesheet: any[] = [
+const graphStylesheet = [
   {
     selector: 'node',
     style: {
@@ -136,7 +142,7 @@ const graphStylesheet: any[] = [
       opacity: 0.12,
     },
   },
-]
+] as StylesheetJson
 
 function formatNodeType(value: string | null | undefined) {
   if (!value) {
@@ -163,7 +169,7 @@ export function GraphCanvas({ graph, selectedNodeId, onResetGraph, onSelectNode 
     onSelectRef.current = onSelectNode
   }, [onSelectNode])
 
-  const clearHoverState = () => {
+  const clearHoverState = useEffectEvent(() => {
     const cy = cyRef.current
     if (!cy) {
       return
@@ -175,9 +181,9 @@ export function GraphCanvas({ graph, selectedNodeId, onResetGraph, onSelectNode 
 
     hoveredNodeIdRef.current = null
     setHoverCard(null)
-  }
+  })
 
-  const syncHoverCard = (node: any) => {
+  const syncHoverCard = useEffectEvent((node: NodeSingular) => {
     const container = containerRef.current
     if (!container) {
       return
@@ -197,9 +203,9 @@ export function GraphCanvas({ graph, selectedNodeId, onResetGraph, onSelectNode 
       x: clamp(renderedPosition.x + 18, 18, Math.max(18, width - 274)),
       y: clamp(renderedPosition.y - 22, 18, Math.max(18, height - 164)),
     })
-  }
+  })
 
-  const applyHoverState = (node: any) => {
+  const applyHoverState = useEffectEvent((node: NodeSingular) => {
     const cy = cyRef.current
     if (!cy) {
       return
@@ -222,7 +228,7 @@ export function GraphCanvas({ graph, selectedNodeId, onResetGraph, onSelectNode 
 
     hoveredNodeIdRef.current = node.id()
     syncHoverCard(node)
-  }
+  })
 
   const fitGraph = () => {
     cyRef.current?.fit(undefined, 56)
@@ -235,10 +241,15 @@ export function GraphCanvas({ graph, selectedNodeId, onResetGraph, onSelectNode 
     }
 
     if (graph.focus_node_ids.length > 0) {
-      const focusElements = graph.focus_node_ids
-        .map((nodeId) => cy.getElementById(nodeId))
-        .filter((element) => element.length > 0) as any
-      cy.fit(cy.collection(focusElements), 92)
+      const focusCollection = cy.collection()
+      graph.focus_node_ids.forEach((nodeId) => {
+        const element = cy.getElementById(nodeId)
+        if (element.length > 0) {
+          focusCollection.merge(element)
+        }
+      })
+
+      cy.fit(focusCollection, 92)
       return
     }
 
@@ -279,16 +290,16 @@ export function GraphCanvas({ graph, selectedNodeId, onResetGraph, onSelectNode 
       hideEdgesOnViewport: false,
     })
 
-    const handleTapNode = (event: any) => {
+    const handleTapNode = (event: EventObjectNode) => {
       const nodeId = event.target.id()
       onSelectRef.current(nodeId)
     }
 
-    const handleHoverNode = (event: any) => {
+    const handleHoverNode = (event: EventObjectNode) => {
       applyHoverState(event.target)
     }
 
-    const handleMoveNode = (event: any) => {
+    const handleMoveNode = (event: EventObjectNode) => {
       if (hoveredNodeIdRef.current === event.target.id()) {
         syncHoverCard(event.target)
       }
@@ -321,7 +332,7 @@ export function GraphCanvas({ graph, selectedNodeId, onResetGraph, onSelectNode 
     cy.on('mouseover', 'node', handleHoverNode)
     cy.on('mousemove', 'node', handleMoveNode)
     cy.on('mouseout', 'node', handleExitNode)
-    cy.on('tap', (event) => {
+    cy.on('tap', (event: EventObject) => {
       if (event.target === cy) {
         clearHoverState()
       }
@@ -400,11 +411,11 @@ export function GraphCanvas({ graph, selectedNodeId, onResetGraph, onSelectNode 
     layout.run()
 
     if (hoveredNodeIdRef.current) {
-      const hoveredNode = cy.getElementById(hoveredNodeIdRef.current)
-      if (hoveredNode.length > 0) {
-        applyHoverState(hoveredNode)
+      const hoveredElement = cy.getElementById(hoveredNodeIdRef.current)
+      if (hoveredElement.length > 0 && hoveredElement.isNode()) {
+        queueMicrotask(() => applyHoverState(hoveredElement))
       } else {
-        clearHoverState()
+        queueMicrotask(() => clearHoverState())
       }
     }
   }, [graph, selectedNodeId])

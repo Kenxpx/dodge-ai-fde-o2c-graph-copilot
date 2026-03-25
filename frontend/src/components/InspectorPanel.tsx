@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import type { HelpMessage, NodeDetail, SearchResult } from '../types'
 
@@ -337,13 +337,8 @@ export function InspectorPanel({
   onHelpExampleClick,
   onQuickAction,
 }: InspectorPanelProps) {
-  const [activeTab, setActiveTab] = useState<'guide' | 'explorer'>('guide')
-
-  useEffect(() => {
-    if (selectedNodeId || search.trim().length >= 2) {
-      setActiveTab('explorer')
-    }
-  }, [selectedNodeId, search])
+  const [preferredTab, setPreferredTab] = useState<'guide' | 'explorer'>('guide')
+  const activeTab = selectedNodeId || search.trim().length >= 2 ? 'explorer' : preferredTab
 
   const metadataEntries = selectedNode
     ? Object.entries(selectedNode.metadata).filter(([, value]) => value !== null && value !== '')
@@ -369,14 +364,14 @@ export function InspectorPanel({
             <button
               type="button"
               className={`tab-button ${activeTab === 'guide' ? 'active' : ''}`}
-              onClick={() => setActiveTab('guide')}
+              onClick={() => setPreferredTab('guide')}
             >
               Project guide
             </button>
             <button
               type="button"
               className={`tab-button ${activeTab === 'explorer' ? 'active' : ''}`}
-              onClick={() => setActiveTab('explorer')}
+              onClick={() => setPreferredTab('explorer')}
             >
               Explorer
             </button>

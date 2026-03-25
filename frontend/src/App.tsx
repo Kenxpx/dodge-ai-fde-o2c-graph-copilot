@@ -1,4 +1,4 @@
-import { startTransition, useDeferredValue, useEffect, useRef, useState } from 'react'
+import { startTransition, useDeferredValue, useEffect, useEffectEvent, useRef, useState } from 'react'
 
 import { api } from './api'
 import './App.css'
@@ -362,16 +362,7 @@ function App() {
     await navigator.clipboard.writeText(message.sql)
   }
 
-  useEffect(() => {
-    if (isBootstrapping || demoHandledRef.current) {
-      return
-    }
-
-    const demoKey = new URLSearchParams(window.location.search).get('demo')
-    if (!demoKey) {
-      return
-    }
-
+  const runDemoScenario = useEffectEvent((demoKey: string) => {
     const scenario = DEMO_SCENARIOS[demoKey]
     if (!scenario) {
       return
@@ -384,6 +375,19 @@ function App() {
     }
 
     void runHelpQuestion(scenario.question)
+  })
+
+  useEffect(() => {
+    if (isBootstrapping || demoHandledRef.current) {
+      return
+    }
+
+    const demoKey = new URLSearchParams(window.location.search).get('demo')
+    if (!demoKey) {
+      return
+    }
+
+    runDemoScenario(demoKey)
   }, [isBootstrapping])
 
   const stats = meta?.dataset_stats.totals
