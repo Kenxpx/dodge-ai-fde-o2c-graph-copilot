@@ -2,6 +2,9 @@
 
 This document explains how I structured the project and why the core pieces are shaped the way they are.
 
+For a repository map, see `docs/PROJECT_STRUCTURE.md`.
+For local workflow and extension guidance, see `docs/DEVELOPMENT.md`.
+
 ## Goal
 
 The assignment asks for a graph-based interface over an ERP dataset with natural-language querying. I treated that as two related problems:

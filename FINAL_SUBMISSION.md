@@ -26,6 +26,9 @@ Standout product touches in the current build:
 
 - `README.md`
 - `SUBMISSION_GUIDE.md`
+- `docs/PROJECT_STRUCTURE.md`
+- `docs/DEVELOPMENT.md`
+- `docs/API.md`
 - `backend/app/main.py`
 - `backend/app/services/ingestion.py`
 - `backend/app/services/query_service.py`

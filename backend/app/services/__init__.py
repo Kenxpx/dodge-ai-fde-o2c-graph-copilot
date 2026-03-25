@@ -1,1 +1,1 @@
-"""Service layer for ingestion, graph operations, and grounded querying."""
+"""Service layer for ingestion, graph operations, grounded querying, and operator workflows."""

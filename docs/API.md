@@ -4,6 +4,9 @@ This project already runs on top of a FastAPI backend, so it can be used as both
 - a web application
 - a programmatic API for grounded ERP and project-level workflows
 
+For a system overview, see `README.md` and `docs/ARCHITECTURE.md`.
+For the repository map, see `docs/PROJECT_STRUCTURE.md`.
+
 ## Base URLs
 
 - Live API base: `https://dodge-ai-o2c-graph-copilot.onrender.com/api`

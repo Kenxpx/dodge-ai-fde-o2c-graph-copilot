@@ -1,202 +1,104 @@
 # Order-to-Cash Intelligence Copilot
 
-An analyst-facing copilot for the SAP order-to-cash dataset used in the Dodge AI FDE take-home.
+A production-style analysis workspace for the Dodge AI Forward Deployed Engineer take-home.
 
-The app does three things well:
-- traces business objects across sales order, delivery, billing, A/R, and payment clearance
-- surfaces a graph view over the same semantic model used for querying
-- answers natural-language questions with grounded SQL, using deterministic paths first and Gemini only when needed
+The project combines:
+- grounded ERP question answering over the provided SAP order-to-cash dataset
+- a materialized graph for search, tracing, and visual context
+- an operator-facing workflow with an operations inbox, guided follow-ups, and exportable investigation briefs
+- a documented FastAPI backend that can also be used as a standalone API
 
-To make it feel more like a real operator tool, I also added:
-- an operations inbox for high-signal issue buckets
-- guided follow-up questions after each answer
-- exportable investigation briefs for sharing findings
-- a right-rail project guide that explains architecture, setup, deployment, authorship, and design choices
-
-## Links
+## Live links
 
 - Live demo: `https://dodge-ai-o2c-graph-copilot.onrender.com`
 - Public repository: `https://github.com/Kenxpx/dodge-ai-fde-o2c-graph-copilot`
+- API index: `https://dodge-ai-o2c-graph-copilot.onrender.com/api`
+- API docs: `https://dodge-ai-o2c-graph-copilot.onrender.com/api/docs`
 
-## What I built
+## What the project does
 
-This project is a full-stack web app with:
-- a FastAPI backend
-- DuckDB as the analytical store
-- a semantic layer over the raw SAP exports
-- a materialized graph for exploration
-- a React frontend for graph search, inspection, and grounded chat
-- an operations inbox for incomplete flows, open A/R, cancellations, and missing deliveries
-- answer-linked follow-up suggestions, recommended actions, and brief export
-- a project-help chatbot for reviewer and evaluator questions
-- Gemini-backed SQL planning for broader in-domain questions
+This workspace is designed around the core order-to-cash investigation loop:
+1. start from an issue bucket, known business object, or plain-language question
+2. answer with validated DuckDB SQL over a shared semantic model
+3. focus the graph on the entities behind the answer
+4. suggest the next useful investigation step
+5. export the result when it needs to be handed off
 
-The core design choice was to keep the graph layer and the query layer on top of the same business model. I did not want a separate graph representation drifting away from the SQL representation and producing inconsistent answers.
+Core workflows supported well:
+- invoice tracing across sales order, delivery, billing, A/R, and payment
+- broken-flow detection
+- cancellation analysis
+- open A/R review
+- graph search and entity inspection
+- project and implementation help through the built-in right-rail guide
 
-## Product walkthrough
-
-The app is designed around a simple workflow:
-1. Start from the operations inbox, ask a business question, or search for a known entity.
-2. Run a grounded query against the semantic O2C model.
-3. Return a short business answer, structured highlights, recommended actions, guided follow-ups, and the supporting evidence.
-4. Focus the graph on the same entities so the visual view explains the answer.
-5. Export a brief if the result needs to be shared.
-6. Use the right-rail guide for project-specific questions without leaving the app.
-
-That flow matters more for this task than maximizing feature count. I wanted the app to feel dependable and readable first.
-
-## Why this architecture
-
-### DuckDB
-
-I chose DuckDB because the dataset is analytical, read-heavy, and small enough to rebuild locally without extra infrastructure. It made the project easy to run, easy to deploy, and easy to ground LLM answers in actual query execution.
-
-### Semantic views before any chat logic
-
-The raw dataset has the usual ERP quirks:
-- item identifiers do not always match format across tables
-- billing items reference delivery items, not sales orders directly
-- cancellation documents need special handling
-- accounting and payment linkage is indirect
-
-Instead of pushing that complexity into prompts or frontend code, I resolved it once in the semantic layer and treated `o2c_flow` as the main business-facing table.
-
-### Deterministic first, LLM second
-
-The most important evaluator flows are predictable:
-- top products
-- top customers
-- billing trace
-- incomplete flows
-- cancellations
-- open A/R
-
-Those paths should not depend on an LLM. I kept them deterministic so the app remains strong even when the model is unavailable, and then used Gemini for broader in-domain questions that are genuinely more open-ended.
-
-## High-level architecture
+## Architecture at a glance
 
 ```text
-Raw JSONL dataset
-  -> ingestion.py
+SAP JSONL exports
+  -> ingestion pipeline
   -> raw DuckDB tables
   -> semantic SQL views
   -> graph_nodes / graph_edges
-  -> FastAPI APIs
-  -> React graph + chat UI
+  -> FastAPI services and APIs
+  -> React workspace
 ```
 
-## Important modeling decisions
+Main design choices:
+- `DuckDB` for a lightweight, local-first analytical store
+- `o2c_flow` as the core semantic view for grounded business questions
+- deterministic SQL first for the highest-signal evaluator workflows
+- Gemini fallback only for broader in-domain questions
+- one shared business model for both graph exploration and question answering
 
-### 1. `o2c_flow` is the center of the system
+## Repository guide
 
-`o2c_flow` is a flattened view at roughly the sales-order-item grain. It is the safest place to answer most business questions because it already carries the lineage between:
-- sales orders
-- delivery items
-- billing items
-- accounting documents
-- payment clearances
+### Key backend files
 
-This reduced both query complexity and hallucination risk.
-
-### 2. Cancellation handling is explicit
-
-Cancellation documents are modeled through:
-- `billing_document_type = 'S1'`
-- `cancelled_billing_document`
-
-That logic is baked into the semantic layer and surfaced in both SQL answers and graph edges.
-
-### 3. The graph is materialized, not improvised in the UI
-
-I materialized `graph_nodes` and `graph_edges` from the semantic views. That keeps search, inspection, and answer-linked graph focus fast and predictable.
-
-## Query strategy
-
-The backend query service uses three layers:
-
-### 1. Guardrails
-
-Off-domain prompts are rejected before any SQL generation.
-
-### 2. Deterministic templates
-
-Known evaluator questions map directly to SQL templates.
-
-### 3. Gemini fallback
-
-If the question is in-domain but not covered by a built-in template, Gemini proposes SQL. That SQL is:
-- validated as read-only
-- restricted to approved tables
-- capped with a row limit
-- automatically repaired once if the model makes a schema-level mistake
-
-## Reviewer guide
-
-If I were reading this repo cold, I would start here:
+- `backend/app/main.py`
+  FastAPI entry point, lifecycle bootstrap, API docs configuration, and SPA serving.
 - `backend/app/services/ingestion.py`
-  This is where the dataset becomes a usable business model.
+  Builds the database, semantic views, graph nodes, and graph edges.
 - `backend/app/services/query_service.py`
-  This is the main orchestration layer for deterministic and Gemini-backed queries.
+  Main ERP question-answering orchestration.
 - `backend/app/services/graph_service.py`
-  This is the bridge between answer results and the graph UI.
+  Search, node detail, graph expansion, and focused subgraph generation.
 - `backend/app/services/inbox_service.py`
-  This powers the operator-focused issue buckets shown in the operations inbox.
+  Operations inbox used by the UI.
 - `backend/app/services/project_help_service.py`
-  This powers the right-rail project guide and keeps its answers grounded in project notes.
-- `frontend/src/App.tsx`
-  This shows how the product experience is stitched together.
+  Project-level help chatbot grounded in repository notes.
 
-## Additional docs
+### Key frontend files
+
+- `frontend/src/App.tsx`
+  Top-level workspace orchestration.
+- `frontend/src/components/ChatPanel.tsx`
+  ERP chat, operations inbox, and answer actions.
+- `frontend/src/components/GraphCanvas.tsx`
+  Cytoscape graph canvas and graph controls.
+- `frontend/src/components/InspectorPanel.tsx`
+  Right rail for entity inspection and project help.
+
+### Docs map
 
 - `docs/ARCHITECTURE.md`
+  System design and modeling decisions.
+- `docs/PROJECT_STRUCTURE.md`
+  Directory-level repository map and ownership guide.
+- `docs/DEVELOPMENT.md`
+  Developer workflow, commands, extension points, and debugging notes.
 - `docs/SETUP_AND_DEPLOYMENT.md`
+  Local setup and deployment instructions.
 - `docs/API.md`
+  Public API guide and examples.
 - `docs/AI_SESSION_LOG.md`
+  AI-assisted implementation notes.
 
-## API
-
-The backend is also usable as a standalone API, not just through the UI.
-
-- API index: `/api`
-- Interactive docs: `/api/docs`
-- OpenAPI schema: `/api/openapi.json`
-
-Main endpoints:
-- `GET /api/meta`
-- `POST /api/query/chat`
-- `POST /api/help/chat`
-- `GET /api/graph/initial`
-- `GET /api/graph/search`
-- `GET /api/graph/node/{node_id}`
-- `POST /api/graph/expand`
-- `POST /api/graph/subgraph`
-
-Examples and usage notes are in `docs/API.md`.
-
-## Project structure
-
-```text
-backend/
-  app/
-    api/
-    llm/
-    services/
-  scripts/
-  tests/
-docs/
-frontend/
-  src/
-sessions/
-src/
-Dockerfile
-README.md
-```
-
-## Running locally
+## Quick start
 
 ### Backend
 
-On Windows, native CPython works better than MSYS Python for DuckDB wheels.
+On Windows, native CPython 3.11 is the safest option for DuckDB.
 
 ```powershell
 py -3.11 -m venv .venv
@@ -214,45 +116,39 @@ npm install
 npm run dev
 ```
 
-The Vite dev server proxies `/api` to `http://localhost:8000`.
+Vite proxies `/api` to the FastAPI backend during local development.
 
-## Deployment
+## Public API
 
-The live demo runs as a single Render web service:
-- frontend built into static assets
-- FastAPI serving API routes plus the built SPA
-- dataset bundled with the container
+The backend is usable directly as an API.
 
-See:
-- `docs/SETUP_AND_DEPLOYMENT.md`
-- `docs/ARCHITECTURE.md`
+Important endpoints:
+- `GET /api`
+- `GET /api/meta`
+- `POST /api/query/chat`
+- `POST /api/help/chat`
+- `GET /api/graph/initial`
+- `GET /api/graph/search`
+- `GET /api/graph/node/{node_id}`
+- `POST /api/graph/expand`
+- `POST /api/graph/subgraph`
 
-## Environment variables
-
-See `.env.example` for the supported variables.
-
-The deployed app currently uses:
-- `APP_ENV=production`
-- `LLM_PROVIDER=gemini`
-- `GEMINI_MODEL=gemini-2.5-flash`
+For examples and response usage, see `docs/API.md`.
 
 ## Verification
 
-Verified locally:
-- ingestion and semantic-layer build
-- graph node and edge generation
-- deterministic query flows
-- Gemini fallback query path
-- operations inbox metadata
-- project-guide help responses
-- guided follow-up suggestions
-- recommended action blocks
-- investigation brief export
+Checked locally:
+- database build
+- graph generation
+- deterministic ERP flows
+- Gemini-backed ERP flow
+- API index and OpenAPI docs
+- project-help route
 - frontend production build
 - backend smoke tests via `pytest`
 
 ## Notes for evaluation
 
-- I optimized for clarity and groundedness over breadth.
-- The hardest parts of this dataset are not UI problems; they are modeling problems. Most of the work went into resolving lineage and cancellation semantics cleanly.
-- Gemini is enabled in production, but the most important evaluator flows are still deterministic so the app stays reliable.
+- The hardest part of this assignment is the data modeling, not the graph widget.
+- The project is intentionally optimized for groundedness, readability, and evaluator reliability.
+- Deterministic coverage exists for the most important demo paths so the app stays strong even when the LLM path is unavailable.

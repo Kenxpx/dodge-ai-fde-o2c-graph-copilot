@@ -16,6 +16,9 @@ This repository is ready for the Dodge AI FDE submission flow, with a few final 
 ## Files to point reviewers to
 
 - Main README: `README.md`
+- Repository map: `docs/PROJECT_STRUCTURE.md`
+- Developer workflow: `docs/DEVELOPMENT.md`
+- API guide: `docs/API.md`
 - Backend app entry point: `backend/app/main.py`
 - Semantic ingestion pipeline: `backend/app/services/ingestion.py`
 - Query orchestration and prompting path: `backend/app/services/query_service.py`

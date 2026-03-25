@@ -2,6 +2,9 @@
 
 This document covers the stack, local setup, and the exact deployment model used for the live demo.
 
+If you want a repository map first, start with `docs/PROJECT_STRUCTURE.md`.
+If you want day-to-day developer workflow notes, use `docs/DEVELOPMENT.md`.
+
 ## Stack used
 
 ### Backend
