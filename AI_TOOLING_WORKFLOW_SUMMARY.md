@@ -1,129 +1,276 @@
 # AI-Assisted Engineering Workflow Summary
 
-This document is a curated summary of the AI-assisted workflow used to build the Dodge AI FDE submission. It is intended as an uploadable substitute when a raw editor transcript is not being shared.
+This file is a curated summary of the AI-assisted workflow used to build the Dodge AI FDE submission. It is written as an uploadable substitute for raw editor transcripts or prompt exports.
+
+The goal of the workflow was not to use AI to generate a flashy demo. The goal was to use AI as a force multiplier while retaining strong control over system design, data correctness, trust boundaries, product shape, and deployment quality.
+
+## How I used AI
+
+I used AI the way I would use it in a strong forward-deployed engineering loop:
+
+- to compress time from ambiguity to structure
+- to accelerate backend, frontend, data, and deployment execution in parallel
+- to explore multiple implementation paths quickly and then choose deliberately
+- to move faster on repetitive work without giving up architectural control
+- to keep iterating until the result felt production-minded rather than assignment-shaped
+
+In practice, AI was used as a high-leverage implementation partner, not as an autopilot. Every important part of the system was still driven by explicit technical choices, validation steps, and repeated refinement.
+
+## Why this workflow fits the Forward Deployed Engineer role
+
+The Dodge AI role emphasizes:
+
+- end-to-end ownership
+- working close to real operational workflows
+- building reliable integrations and tooling
+- turning ambiguous customer environments into repeatable product primitives
+- debugging quickly across data, backend, frontend, and deployment layers
+- using code-generation tools aggressively without becoming dependent on them
+
+This project was intentionally built in that style.
+
+I treated the take-home less like a toy app and more like a small forward-deployed product build:
+
+- first understand the operational problem deeply
+- model the messy ERP reality correctly
+- ship something credible end to end
+- tighten reliability and trust
+- improve the user workflow until it feels useful in a real operator setting
+- document it so another engineer or reviewer can understand the system quickly
 
 ## Primary tools used
 
 - Codex / GPT-5 coding agent as the main implementation copilot
-- PowerShell for execution, validation, deployment, and debugging
-- FastAPI `TestClient`, `pytest`, and frontend production builds for verification
+- PowerShell for local execution, profiling, verification, Git, and deployment operations
+- FastAPI `TestClient`, `pytest`, and frontend production builds for validation
 
-## How AI was used in practice
+## End-to-end workflow
 
-I used AI as a high-leverage implementation partner, not as an autopilot. The workflow was:
+### 1. Decode the assignment and infer the real evaluation criteria
 
-1. Understand the assignment precisely.
-   - Extract the actual role and task expectations.
-   - Separate the visible deliverables from the hidden evaluation criteria.
-   - Optimize for reviewer trust, groundedness, and operational usefulness instead of surface complexity.
+Representative prompt patterns:
 
-2. Reverse-engineer the dataset before writing product code.
-   - Profile the SAP order-to-cash tables.
-   - recover the true lineage across sales orders, delivery documents, billing documents, accounting entries, and payments
-   - normalize item-level identifiers across systems where formatting was inconsistent
-   - identify cancellation semantics and the exact reversal pattern in billing documents
+- Analyze the Dodge AI role brief and task brief in depth.
+- Infer what the company is actually testing beyond the explicit checklist.
+- Recommend the smallest architecture that still looks credible as a real internal tool.
 
-3. Design the core semantic layer first.
-   - Build a durable business view that both the graph and natural-language layer could share
-   - avoid separate logic paths for the graph and chat so answers and graph focus stay aligned
-   - choose a data model that supports deterministic evaluator workflows while still allowing broader in-domain queries
+What AI helped accelerate:
 
-4. Implement the application end to end.
-   - backend ingestion and semantic modeling
-   - graph materialization and entity APIs
-   - deterministic query templates for the highest-signal business questions
-   - constrained LLM-backed SQL fallback for broader ERP prompts
-   - reviewer-friendly React UI with graph exploration, operations inbox, guided follow-ups, and project guide
+- quickly extracting the hidden signals in the role and task language
+- separating cosmetic requirements from the parts that actually demonstrate judgment
+- focusing the build around ownership, grounding, usability, and shipping quality
 
-5. Iterate hard on trust and presentation.
-   - improve answer structure so output reads like an operator tool instead of a raw LLM reply
-   - add explicit evidence, SQL, focus entities, and recommended next actions
-   - refine the graph workspace so it supports real inspection rather than just showing a dense network
-   - improve deployment packaging, docs, API discoverability, and submission quality
+What remained judgment-driven:
 
-## Representative prompt patterns
+- deciding that this needed to feel like an operator tool, not a graph demo
+- prioritizing reliability and reviewer trust over broad but shallow feature coverage
 
-These are representative prompt styles and workflows I used while building and refining the submission:
+### 2. Reverse-engineer the ERP dataset before writing product code
 
-### 1. Problem framing and evaluator alignment
+Representative prompt patterns:
 
-- Analyze the role brief and the task brief deeply. Infer what the company is actually testing beyond the explicit checklist.
-- Identify which parts of the assignment need production-style reliability versus where a lighter implementation is acceptable.
-- Recommend the smallest architecture that still looks credible as an internal operator tool.
+- Profile the SAP order-to-cash dataset and recover the true business lineage.
+- Identify schema traps, broken joins, item-number inconsistencies, and cancellation semantics.
+- Propose a semantic model that can support both graph exploration and grounded question answering.
 
-### 2. Data modeling and ERP lineage
+What AI helped accelerate:
 
-- Profile the SAP order-to-cash dataset and derive the real join path from sales order to delivery to billing to accounting to payment.
-- Detect schema traps, especially item-number formatting mismatches, indirect references, and cancellation semantics.
-- Propose a semantic layer that can support both graph traversal and grounded SQL answers without duplicate logic.
+- fast schema inspection
+- join-path exploration
+- relationship hypothesis generation
+- iterative data-model drafting
 
-### 3. Query engine and guardrails
+What remained judgment-driven:
 
-- Build a hybrid query engine: deterministic templates for evaluator-critical questions and an LLM fallback for broader in-domain prompts.
-- Constrain generated SQL to approved schema objects, validate it as read-only, and reject off-domain or unsafe prompts.
-- Structure answers with key findings, follow-up questions, evidence, and recommended actions.
+- verifying that billing lineage was not a naive direct sales-order join
+- normalizing item identifiers across documents
+- treating cancellations as a first-class business behavior instead of an edge case
 
-### 4. UI and workflow refinement
+This was one of the highest-signal parts of the entire project. The real challenge was not rendering a graph. It was building a correct business model underneath it.
 
-- Make the product feel like a real operator workspace rather than a generic AI dashboard.
-- Improve graph readability, focus behavior, hover interactions, and entity inspection flows.
-- Reduce visual noise, tighten the layout, and make the interface self-explanatory for a reviewer seeing it for the first time.
+### 3. Design a shared semantic layer instead of separate graph and chat logic
 
-### 5. Deployment and submission quality
+Representative prompt patterns:
 
-- Prepare the project for public review: docs, setup, deployment, API docs, AI workflow summary, and submission-ready artifacts.
-- Test the live deployment and make sure the app works as a complete submission, not just as local code.
+- Build one business model that powers both the graph and the answer layer.
+- Avoid split-brain logic where the graph tells one story and the SQL answers tell another.
+- Keep the system extensible enough for open-ended in-domain questions without sacrificing groundedness.
 
-## Key technical decisions that came out of the AI workflow
+What AI helped accelerate:
+
+- scaffolding the ingestion and graph materialization structure
+- drafting and refining semantic transformations
+- stress-testing architecture options quickly
+
+What remained judgment-driven:
+
+- choosing `DuckDB` as the core analytical store
+- choosing `o2c_flow` as the semantic center of gravity
+- deciding to keep graph generation, focused subgraphs, and SQL answers aligned through one shared model
+
+### 4. Build a hybrid query engine with deterministic coverage first
+
+Representative prompt patterns:
+
+- Implement deterministic query templates for the evaluator-critical business questions.
+- Add a constrained LLM path for broader in-domain ERP prompts.
+- Validate generated SQL as read-only and grounded in known schema objects.
+
+What AI helped accelerate:
+
+- implementation of query orchestration and prompt shaping
+- SQL-generation workflow scaffolding
+- edge-case enumeration and repair-path iteration
+
+What remained judgment-driven:
+
+- deciding that deterministic coverage was essential for evaluator reliability
+- constraining Gemini instead of allowing free-form generation
+- structuring answers around evidence, findings, next actions, and graph focus
+
+The final query system was intentionally hybrid:
+
+- deterministic SQL for the highest-value investigation flows
+- constrained Gemini-backed fallback for broader ERP questions
+- explicit guardrails for off-domain prompts
+- SQL safety validation to keep execution read-only and bounded
+
+### 5. Treat the graph as a real investigation surface
+
+Representative prompt patterns:
+
+- Make the graph useful for analysis, not just visually impressive.
+- Keep the graph focused on the entities behind the answer.
+- Improve readability through layout selection, hover behavior, and interaction cues.
+
+What AI helped accelerate:
+
+- Cytoscape integration
+- iterative UI experiments
+- hover-state logic
+- visual refinement passes
+
+What remained judgment-driven:
+
+- reducing graph noise rather than adding decorative complexity
+- choosing focused subgraphs over giant unreadable canvases
+- refining hover previews, neighborhood highlighting, and selection behavior so the graph helps the investigation workflow
+
+### 6. Build the surrounding operator workflow, not just the core query path
+
+Representative prompt patterns:
+
+- Add the kinds of surfaces an operator would actually use around the analysis engine.
+- Make the UI self-explanatory for someone seeing the product for the first time.
+- Add reviewer-friendly affordances without turning the app into a cluttered dashboard.
+
+What AI helped accelerate:
+
+- feature scaffolding
+- interface variants
+- repetitive UI wiring
+- export and utility flows
+
+What remained judgment-driven:
+
+- adding an operations inbox for cancellations, missing deliveries, and open A/R
+- adding guided follow-up questions after grounded answers
+- adding a right-rail project guide so reviewers can understand the implementation quickly
+- tightening the overall UI repeatedly to move away from a generic AI-generated feel
+
+### 7. Finish the project like a real deployment, not a local prototype
+
+Representative prompt patterns:
+
+- Prepare the repository for public review.
+- Add setup instructions, architecture notes, API documentation, and submission artifacts.
+- Deploy the app live and verify the hosted version, not just local code.
+
+What AI helped accelerate:
+
+- deployment packaging
+- docs drafting
+- repository polish
+- submission artifact preparation
+
+What remained judgment-driven:
+
+- selecting the deployment target
+- checking live behavior after push
+- making sure the final product read like a serious engineering submission
+
+## Representative prompt / workflow themes
+
+These are the core prompt themes I used repeatedly across the build:
+
+- analyze the role and task deeply before writing code
+- infer the hidden evaluation rubric
+- model the ERP relationships correctly before building UX
+- design a hybrid deterministic plus LLM query engine
+- keep the graph and answer layer grounded in one shared semantic model
+- reject off-domain behavior and validate all generated SQL
+- make the UI feel like an operator tool rather than an AI demo
+- verify the live product, not just local code
+- improve docs and submission materials until a reviewer can understand the system quickly
+
+## Concrete technical decisions AI helped accelerate
 
 ### Shared semantic layer
 
-The graph explorer and grounded Q&A both sit on top of the same semantic business model. That was deliberate. It keeps the app internally consistent and prevents the classic failure mode where the graph says one thing and the answer layer says another.
+The graph explorer and grounded Q&A both sit on top of the same business model. That keeps the product internally coherent and dramatically reduces trust problems.
 
 ### Deterministic-first evaluator coverage
 
-I intentionally implemented deterministic query templates for the most likely evaluator flows:
+I intentionally added deterministic support for the flows most likely to be evaluated:
 
-- invoice / billing trace
+- billing / invoice trace
 - top customers
 - top billed products
 - incomplete flows
 - cancellations
 - open accounts receivable
 
-This made the demo much more reliable than relying entirely on model-generated SQL.
+This was a deliberate product and reliability decision, not just an implementation shortcut.
 
-### Constrained LLM fallback instead of open-ended generation
+### Constrained Gemini fallback
 
-The Gemini path is used as a constrained fallback for broader in-domain questions. It is not allowed to behave like a free-form chatbot. The prompts, schema constraints, read-only SQL validation, and repair logic were all added to keep it grounded.
+The Gemini path exists to expand coverage, but it is intentionally constrained:
 
-### Graph as an investigation surface, not decoration
+- domain guardrails
+- schema-aware prompting
+- read-only SQL validation
+- repair handling when the model guesses a wrong field
 
-The graph was treated as an operator tool:
+That kept the app useful without letting the model become the source of truth.
 
-- focus-aware subgraphs
-- entity inspection
-- search-driven navigation
+### Graph as a workflow primitive
+
+The graph layer was used as an investigation aid:
+
+- focused subgraphs
+- entity search
 - hover previews
 - neighborhood highlighting
+- node inspection
 - export support
 
-That made it useful for tracing and triage instead of just acting as a visual gimmick.
+That made the graph useful for tracing and triage instead of just decorative.
 
 ## Debugging and iteration highlights
 
-- Recovered the real Notion content and task expectations before designing the app
-- Verified that billing lineage is not a trivial direct sales-order join
-- Normalized item identifiers across documents so the business trace remains correct
-- Modeled cancellation flows explicitly so reversed invoices do not produce misleading answers
-- Added SQL validation to prevent unsafe or unsupported generated queries
-- Tightened the frontend until the graph interactions, answer structure, and reviewer guide all worked together coherently
-- Fixed deployment packaging issues and validated the live service after push
-- Iterated on the UI multiple times to move away from a generic AI-generated look toward a cleaner, more professional product feel
+- recovered and analyzed the actual role / task content before locking the architecture
+- validated non-obvious ERP lineage paths instead of trusting superficial joins
+- normalized inconsistent identifiers across item-level records
+- modeled invoice cancellation behavior explicitly
+- added SQL validation to reject unsafe or unsupported model output
+- improved answer structure so results read like business analysis, not raw model text
+- refined the graph workspace until the interaction quality matched the rest of the product
+- fixed deployment packaging and verified the live application after push
+- iterated on the UI multiple times to make it calmer, more professional, and more reviewer-friendly
 
 ## Validation and quality gates
 
-I did not treat AI output as final by default. I used explicit quality gates:
+AI-generated output was never treated as final by default. I used explicit quality gates:
 
 - backend tests through `pytest`
 - frontend production build through `npm run build`
@@ -131,25 +278,27 @@ I did not treat AI output as final by default. I used explicit quality gates:
 - live deployment verification
 - manual checks against the actual business flow and entity relationships
 
-## What AI accelerated vs. what remained judgment-driven
+## What AI accelerated vs. what remained human-led
 
 AI accelerated:
 
-- code scaffolding
+- scaffolding and code generation
 - iterative refactors
 - UI variants
 - repetitive wiring
 - documentation drafting
 - edge-case brainstorming
+- implementation speed across backend, frontend, and deployment
 
-Human judgment remained central for:
+The human-led parts remained:
 
 - architecture selection
-- data model correctness
+- semantic model correctness
 - evaluator prioritization
-- trust/guardrail design
-- deciding what to ship and what not to overbuild
+- guardrail design
+- trust and usability tradeoffs
+- deciding what to build deeply and what to leave out
 
 ## Closing note
 
-The final workflow was not “use AI to generate a demo.” It was closer to “use AI to compress engineering iteration time while preserving strong control over the data model, trust boundaries, and product shape.” That is the same working style I would use in a forward-deployed engineering environment: fast iteration, grounded outputs, and constant movement toward something operationally credible.
+The final workflow was not "use AI to generate a submission." It was "use AI to compress iteration cycles while preserving strong engineering control." That is exactly the mode I would bring to a forward-deployed environment: move quickly, own the full stack, reduce ambiguity into structure, and keep shipping until the system is operationally credible.
