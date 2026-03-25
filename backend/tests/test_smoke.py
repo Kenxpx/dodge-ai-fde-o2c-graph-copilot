@@ -58,6 +58,30 @@ def test_trace_answer_includes_follow_ups_and_graph_focus() -> None:
     assert "billing_document:90504298" in response.graph.focus_node_ids
 
 
+def test_llm_planning_failure_degrades_gracefully() -> None:
+    service = QueryService()
+    service.provider = object()
+
+    async def failing_plan(_: ChatRequest) -> dict[str, object]:
+        raise RuntimeError("provider unavailable")
+
+    service._generate_sql_with_llm = failing_plan  # type: ignore[method-assign]
+
+    response = asyncio.run(
+        service.answer(
+            ChatRequest(
+                question="Which delivery plants are associated with the widest range of billed products?",
+                conversation=[],
+                focus_node_ids=[],
+            )
+        )
+    )
+
+    assert response.answer_title == "Could not answer reliably"
+    assert response.strategy == "llm_sql_failed"
+    assert response.warnings
+
+
 def test_project_help_answers_project_questions() -> None:
     service = ProjectHelpService()
     response = asyncio.run(

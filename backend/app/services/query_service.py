@@ -428,11 +428,48 @@ Return a JSON object with:
 - summary: concise business answer in at most two sentences
 - highlights: array of 2 to 4 short evidence-backed bullet points
 """.strip()
-        result = await self.provider.complete_json(ANSWER_GUIDE, prompt)
+        try:
+            result = await self.provider.complete_json(ANSWER_GUIDE, prompt)
+        except Exception:
+            return (
+                "Grounded query result",
+                f"Used `{strategy}` to answer the question directly from the dataset.",
+                [f"Returned `{evidence.row_count}` rows from validated read-only SQL."],
+            )
         return (
             result.get("title"),
             result.get("summary", "A grounded answer was generated from the SQL result set."),
             [str(item) for item in result.get("highlights", [])][:4],
+        )
+
+    def _llm_failure_response(self, warning: str) -> ChatResponse:
+        return ChatResponse(
+            answer=(
+                "Gemini could not produce a reliable SQL plan for this broader in-domain question right now, so no answer "
+                "was returned rather than guessing."
+            ),
+            answer_title="Could not answer reliably",
+            highlights=[
+                "The request is in-domain, but the LLM planning step failed before a safe SQL query could be executed.",
+                "Deterministic ERP investigation flows are still available and remain the strongest paths for review.",
+            ],
+            recommended_actions=[
+                "Retry with a more specific billing document, customer, sales order, or product identifier.",
+                "Use one of the deterministic flows first, then branch into a narrower follow-up question.",
+            ],
+            follow_up_questions=[
+                "Trace the full flow of billing document 90504298.",
+                "Identify sales orders that have broken or incomplete flows.",
+                "Show me open accounting documents that have not been cleared by a payment.",
+            ],
+            strategy="llm_sql_failed",
+            warnings=[warning],
+            citations=[
+                "No answer was returned because the Gemini planning step did not complete reliably enough to run SQL."
+            ],
+            sql=None,
+            evidence=None,
+            graph=self.graph_service.initial_graph(),
         )
 
     def _suggest_follow_ups(self, strategy: str, evidence: EvidenceTable) -> list[str]:
@@ -695,7 +732,12 @@ Return a JSON object with:
                     evidence=None,
                     graph=self.graph_service.initial_graph(),
                 )
-            llm_plan = await self._generate_sql_with_llm(request)
+            try:
+                llm_plan = await self._generate_sql_with_llm(request)
+            except Exception as error:
+                return self._llm_failure_response(
+                    f"Gemini planning failed before SQL generation: {error.__class__.__name__}."
+                )
             sql = llm_plan["sql"]
             confidence = llm_plan.get("confidence")
             if isinstance(confidence, (int, float)) and confidence < 0.6:
@@ -706,7 +748,12 @@ Return a JSON object with:
                 # A generated query that fails validation or execution gets one
                 # repair attempt. If that still fails, it is safer to say no than
                 # to bluff through an answer.
-                repair_plan = await self._repair_sql_with_llm(request.question, sql, str(first_error))
+                try:
+                    repair_plan = await self._repair_sql_with_llm(request.question, sql, str(first_error))
+                except Exception as repair_error:
+                    return self._llm_failure_response(
+                        f"Gemini repair failed after the first SQL draft was rejected: {repair_error.__class__.__name__}."
+                    )
                 sql = repair_plan["sql"]
                 used_llm_repair = True
                 repair_confidence = repair_plan.get("confidence")
